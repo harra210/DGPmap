@@ -10,7 +10,7 @@ cd txt_files
 TXT_DIR=$(pwd)
 #
 cd $FQ_DIR
-CanFam4_Ref="/data/Ostrander/Resources/CanFam4_GSD/BWAMEM2/UU_Cfam_GSD_1.0_ROSY.fa"
+#CanFam4_Ref="/data/Ostrander/Resources/CanFam4_GSD/BWAMEM2/UU_Cfam_GSD_1.0_ROSY.fa" # Deprecated as this variable is now exported from parent script
 #
 #
 # Here we read the table into its component variables.
@@ -18,7 +18,7 @@ CanFam4_Ref="/data/Ostrander/Resources/CanFam4_GSD/BWAMEM2/UU_Cfam_GSD_1.0_ROSY.
 # Sample (SM) will be the external sample name and will be renamed with the internal ID names at the very end.
 # 
 # Capture the first row, first column value of the table which will give the array the file name and allow dynamic usage.
-FN=($(awk 'NR==1{print $1; exit}' "$TXT_DIR"/final_header.txt))
+FN=( $(awk 'NR==1{print $1; exit}' "$TXT_DIR"/final_header.txt ) )
 #
 # Set the variables for the table
 while read SM LB ID PU R1 R2 ; do
