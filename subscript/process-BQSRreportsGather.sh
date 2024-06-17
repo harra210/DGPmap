@@ -18,7 +18,7 @@ PREFIX="--input "
 #
 ##
 # Capture a specific value to place into an array to complete the filename properly
-FN=( $(awk 'NR==1{print$1; exit}' "$TXT_DIR"/final_header.txt) )
+FN=( $(awk 'NR==1{print$1; exit}' "$TXT_DIR"/final_header.txt ) )
 #
 # Generate list of file names from chr 1 to chr X to later import into an array
 #
