@@ -20,7 +20,7 @@ cd $FQ_DIR
 ## End Variable Definitions
 #
 # Capture the first row, first column value of this table to give the array the file name and allow dynamic usage
-FN=( $(awk 'NR==1{print $1; exit}' "$TXT_DIR"/final_header.txt) )
+FN=( $(awk 'NR==1{print $1; exit}' "$TXT_DIR"/final_header.txt ) )
 #
 # Now, to generate the swarm file using a while loop to create files chr1 - chrX
 #
