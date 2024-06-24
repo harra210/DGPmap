@@ -29,9 +29,18 @@ DGPmap.sh [OPTION...]
 ```
 Only the fastq flag is optional and the output of the files are to their respective directories. This comes into play later once QC is performed.
 
-**Note:** If you are using a system with faste storage options, or a Google Spark Cluster then using GATK's spark set of tools would be more beneficial to you. 
+**Note:** If you are using a system with fast storage options, or a Google Spark Cluster then using GATK's spark set of tools would be more beneficial to you. 
 
 All paths given are used as placeholders and should be modiefied for personal use.
 
 The companion SRA download package is a script that also integrates with our cluster environment but will intake a tab delimited file or manually inputted SRA Run numbers, download, unpackage the fastQ files into a format ready for the main script to be able process.
 
+## Step 1 - Tab;e Generation
+
+The first step in the process is to create a reference table for the programs to pull data from in order to be able to place into their respective programs. This is mainly important for the alignment step with BWAMEM2 but becomes useful downstream. To start the basic folder heirarchy is:
+
+```
+Parent directory
+	|
+	 -> Folder containing fastQ reads
+```
