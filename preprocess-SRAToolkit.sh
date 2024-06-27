@@ -7,7 +7,7 @@
 # if the dataset to be downloaded is known to have multiple reads per sample. If there is only 1 SRA run per sample then an if statement will create folders properly.
 #
 # getopts string
-opts="io:s:"
+opts="io:s:" # input (optional), output and swarm_name (req'd)
 #
 # Variables to set:
 INPUT=
@@ -201,7 +201,7 @@ fqverify(){
 	read -r -p "Is the previous swarmfile formatted correctly? [Y/N] " k
 	case $k in
 		[y/Y])
-			echo "Continuing to submitting pipeline to cluster\n";;
+			echo "Continuing to submitting pipeline to cluster";;
 		[n/N])
 			echo -e "Exit and retry script"
 			exit 1;;
@@ -216,7 +216,7 @@ fqverify
 jobid1=$(swarm -f SRAtoolkit-prefetch.swarm -g 4 -t 4 --time 24:00:00 --gres=lscratch:75 --module sratoolkit --logdir ~/job_outputs/SRA_Toolkit/Prefetch/"$SWARM_NAME" --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_Prefetch")
 echo "SRAtoolkit Prefetch Swarm ID: " $jobid1
 #
-jobid2=$(swarm -f SRAtoolkit-fastqdump.swarm -g 4 -t 4 --time 36:00:00 --gres=lscratch:75 --module sratoolkit --logdir ~/job_outputs/SRA_Toolkit/fastq-dump/"$SWARM_NAME" --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_Name"_Fqdump")
+jobid2=$(swarm -f SRAtoolkit-fastqdump.swarm -g 4 -t 4 --time 36:00:00 --gres=lscratch:75 --module sratoolkit --logdir ~/job_outputs/SRA_Toolkit/fastq-dump/"$SWARM_NAME" --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid1" --job-name "$SWARM_Name"_Fqdump")
 echo "Sratoolkit Fastq-dump Swarm ID: " $jobid2
 #
 ## End SRAtoolkit pipeline
