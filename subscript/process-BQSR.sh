@@ -19,16 +19,34 @@ cd $FQ_DIR
 #
 ## End Variable Definitions
 #
+if [ "$FQ_IN" = "NISC" ];
+	then
 # Capture the first row, first column value of this table to give the array the file name and allow dynamic usage
-FN=( $(awk 'NR==1{print $1; exit}' "$TXT_DIR"/final_header.txt ) )
+	FN=( $(awk 'NR==1{print $1; exit}' "$TXT_DIR"/final_header.txt ) )
 #
 # Now, to generate the swarm file using a while loop to create files chr1 - chrX
 #
-while read g
-do
-	echo "cd "$MD_DIR"; gatk --java-options \"-Xmx4G\" BaseRecalibrator -R "$CanFam4_Ref" --tmp-dir /lscratch/\$SLURM_JOB_ID -I "${FN[0]}".sort.md.bam --known-sites "$knownsite" -L "$g" -O "$TBL_DIR"/"${FN[0]}"_"$g"_recal.table" >> "$homedir"/bqsr_BaseRecalibrator.swarm
-done < "$interval_list"
+	while read g
+		do
+		echo "cd "$MD_DIR"; gatk --java-options \"-Xmx4G\" BaseRecalibrator -R "$CanFam4_Ref" --tmp-dir /lscratch/\$SLURM_JOB_ID -I "${FN[0]}".sort.md.bam --known-sites "$knownsite" -L "$g" -O "$TBL_DIR"/"${FN[0]}"_"$g"_recal.table" >> "$homedir"/bqsr_BaseRecalibrator.swarm
+	done < "$interval_list"
 #
-echo "cd "$MD_DIR"; gatk --java-options \"-Xmx4G\" BaseRecalibrator -R "$CanFam4_Ref" --tmp-dir /lscratch/\$SLURM_JOB_ID -I "${FN[0]}".sort.md.bam --known-sites "$knownsite" -XL "$interval_list" -O "$TBL_DIR"/"${FN[0]}"_chrY_recal.table" >> "$homedir"/bqsr_BaseRecalibrator.swarm
+	echo "cd "$MD_DIR"; gatk --java-options \"-Xmx4G\" BaseRecalibrator -R "$CanFam4_Ref" --tmp-dir /lscratch/\$SLURM_JOB_ID -I "${FN[0]}".sort.md.bam --known-sites "$knownsite" -XL "$interval_list" -O "$TBL_DIR"/"${FN[0]}"_chrY_recal.table" >> "$homedir"/bqsr_BaseRecalibrator.swarm
 #
-## This completes the Recalibration Table script
+# Now perform the same thing if the initial input is SRA
+#
+	elif [ "$FQ_IN" = "SRA" ];
+	then
+	FN=( $(awk 'NR==1{print$1; exit}' *runs.table ) )
+#
+# Generate the swarmfile creating a while loop
+	while read g
+		do
+		echo "cd "$MD_DIR"; gatk --java-options \"-Xmx4G\" BaseRecalibrator -R "$CanFam4_Ref" --tmp-dir /lscratch/\$SLURM_JOB_ID -I "${FN[0]}".sort.md.bam --known-sites "$knownsite" -L "$g" -O "$TBL_DIR"/"${FN[0]}"_"$g"_recal.table" >> "$homedir"/bqsr_BaseRecalibrator.swarm
+	done < "$interval_list"
+#
+	echo "cd "$MD_DIR"; gatk --java-options \"-Xmx4G\" BaseRecalibrator -R "$CanFam4_Ref" --tmp-dir /lscratch/\$SLURM_JOB_ID -I "${FN[0]}".sort.md.bam --known-sites "$knownsite" -XL "$interval_list" -O "$TBL_DIR"/"${FN[0]}"_chrY_recal.table" >> "$homedir"/bqsr_BaseRecalibrator.swarm
+#
+else
+	exit 1
+fi
