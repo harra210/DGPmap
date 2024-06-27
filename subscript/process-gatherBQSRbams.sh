@@ -20,27 +20,54 @@ BQSR_DIR=$(pwd)
 cd $FQ_DIR
 #
 PREFIX="-I "
-##
 #
-FN=( $(awk 'NR==1{print$1; exit}' "$TXT_DIR"/final_header.txt ) )
+## For NISC-style FastQ inputs
+#
+if [ "$FQ_IN" = "NISC" ];
+	then
+	FN=( $(awk 'NR==1{print$1; exit}' "$TXT_DIR"/final_header.txt ) )
 #
 # Generate BQSR sample name list into a tmp file in the text files folder
 #
-while read g
-do
-	echo ""${FN[0]}"."$g".BQSR.bam" >> "$TXT_DIR"/bqsr_gatherfiles.tmp
-done < "$interval_list"
+	while read g
+		do
+			echo ""${FN[0]}"."$g".BQSR.bam" >> "$TXT_DIR"/bqsr_gatherfiles.tmp
+	done < "$interval_list"
 #
 # Now for chr Y and the unmapped reads
-echo ""${FN[0]}".chrY.BQSR.bam" >> "$TXT_DIR"/bqsr_gatherfiles.tmp
+	echo ""${FN[0]}".chrY.BQSR.bam" >> "$TXT_DIR"/bqsr_gatherfiles.tmp
 #
 # Import the chromosomal bam names into an array
 #
-IFS=,$'\n' read -d '' -r -a bqsrbamfiles < "$TXT_DIR"/bqsr_gatherfiles.tmp
-declare -a bqsrbamfiles
+	IFS=,$'\n' read -d '' -r -a bqsrbamfiles < "$TXT_DIR"/bqsr_gatherfiles.tmp
+	declare -a bqsrbamfiles
 #
 # Now to fully generate the swarmfile
 #
-echo "cd "$BQSRchr_DIR"; gatk --java-options \"-Xmx6G\" GatherBamFiles "${bqsrbamfiles[*]/#/$PREFIX}" --output "$BQSR_DIR"/"${FN[0]}".BQSR.bam" >> "$homedir"/bqsr_gatherBQSRBams.swarm
+	echo "cd "$BQSRchr_DIR"; gatk --java-options \"-Xmx6G\" GatherBamFiles "${bqsrbamfiles[*]/#/$PREFIX}" --output "$BQSR_DIR"/"${FN[0]}".BQSR.bam" >> "$homedir"/bqsr_gatherBQSRBams.swarm
 #
-## This completes collection of BQSR bam files
+## For SRA-style FastQ inputs
+#
+elif [ "$FQ_IN" = "SRA" ];
+	then
+ 	FN=( $(awk 'NR==1{print$1; exit}' *.runs.table ) )
+  #
+  	while read g
+		do
+			echo ""${FN[0]}"."$g".BQSR.bam" >> "$TXT_DIR"/bqsr_gatherfiles.tmp
+	done < "$interval_list"
+#
+# Now for chr Y and the unmapped reads
+	echo ""${FN[0]}".chrY.BQSR.bam" >> "$TXT_DIR"/bqsr_gatherfiles.tmp
+#
+# Import the chromosomal bam names into an array
+#
+	IFS=,$'\n' read -d '' -r -a bqsrbamfiles < "$TXT_DIR"/bqsr_gatherfiles.tmp
+	declare -a bqsrbamfiles
+#
+# Now to fully generate the swarmfile
+#
+	echo "cd "$BQSRchr_DIR"; gatk --java-options \"-Xmx6G\" GatherBamFiles "${bqsrbamfiles[*]/#/$PREFIX}" --output "$BQSR_DIR"/"${FN[0]}".BQSR.bam" >> "$homedir"/bqsr_gatherBQSRBams.swarm
+else
+	exit 1
+fi
