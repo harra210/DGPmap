@@ -10,9 +10,11 @@
 #
 # Fastq defaults
 FQ_IN="NISC"
+FILE_DIR=
+SWARM_NAME=
 #
-# getops string
-opts="f:"
+# getopts string
+opts="i:f:s:h"
 #
 # Gets the command name without path
 cmd(){ echo `basename $0`; }
@@ -21,14 +23,17 @@ cmd(){ echo `basename $0`; }
 usage(){
         echo "\
                 `cmd` [OPTION...]
-        -f, --fastq; Set input fastq style format (default:$OPT)
+        -i, --input; Parent input directory of the files initially looking to process.
+        -f, --fastq; Set input fastq style format (default:"$FQ_IN").
+        -s, --swarm-name; Set the base swarm name for the pipeline, job specific names will be added on job submission.
+        -h, --help; Print this message and exit.
         " | column -t -s ";"
 }
 #
 # Error message
 error(){
         echo "`cmd`: invalid option -- '$1'";
-        echo "Try '`cmd` -h' for more information.";
+        echo "Try '`cmd` -h' or '`cmd`' --help for more information.";
         exit 1;
 }
 #
@@ -41,7 +46,10 @@ for pass in 1 2; do
                 case $1 in
                         --) shift; break;;
                         -*) case $1 in
+                                -i|--input)     export FILE_DIR=$2; shift;;
                                 -f|--fastq)     export FQ_IN=$2; shift;;
+                                -s|--swarm-name)        export SWARM_NAME=$2; shift;;
+                                -h|--help) usage; exit 1;;
                                 --*)    error $1;;
                                 -*)     if [ $pass -eq 1 ]; then ARGS="$ARGS $1";
                                         else error $1; fi;;
@@ -62,7 +70,7 @@ if [ -n "$*" ]; then
         echo "Try '`cmd` -h' for more information."
         exit 1
 fi
-echo "$FQ_IN"
+#echo "$FQ_IN"
 #
 # Variable Definition Sections that are able to be exported to subscripts. Note there are additional variables in subscripts but those are unable to be exported due to dynamics.
 #
@@ -85,13 +93,13 @@ export tmpdir
 cd $homedir
 #
 # Here, we blank all of the swarmfiles to be used from alignment to completion
-#> bwa_to_picard.swarm
-#> mergeDedup.swarm
-#> bqsr_BaseRecalibrator.swarm
-#> bqsr_gatherBQSRReports.swarm
-#> bqsr_ApplyBQSR.swarm
-#> bqsr_gatherBQSRBams.swarm
-#> haplotypecaller.swarm
+> bwa_to_picard.swarm
+> mergeDedup.swarm
+> bqsr_BaseRecalibrator.swarm
+> bqsr_gatherBQSRReports.swarm
+> bqsr_ApplyBQSR.swarm
+> bqsr_gatherBQSRBams.swarm
+> haplotypecaller.swarm
 #
 #
 cd scripts/
@@ -100,17 +108,17 @@ scriptdir=$(pwd)
 cd $tmpdir
 > DatasetDirectories.tmp
 #
-echo "What parent directory are your fastq files that you want to align?"
-if ! read -e -t 60 FILE_DIR || (($? > 128)); then
-        echo "User timeout" >&2
-        exit 1
-fi
+#echo "What parent directory are your fastq files that you want to align?"
+#if ! read -e -t 60 FILE_DIR || (($? > 128)); then
+#        echo "User timeout" >&2
+#        exit 1
+#fi
 #
-echo "What do you want to name your base swarm?"
-if ! read -e -t 60 SWARM_NAME || (($? > 128)); then
-        echo "User timeout" >&2
-        exit 1
-fi
+#echo "What do you want to name your base swarm?"
+#if ! read -e -t 60 SWARM_NAME || (($? > 128)); then
+#        echo "User timeout" >&2
+#        exit 1
+#fi
 #
 cd $FILE_DIR
 #
@@ -134,8 +142,13 @@ done
 #
 for dir in ${basedir[@]};
         do
-                ( [ -d "$dir" ] && cd $dir && echo "Entering into $dir and generating alignment swarm" && bash "$scriptdir"/process-BWA.sh )
+                ( [ -d "$dir" ] && cd $dir && bash "$scriptdir"/process-BWA.sh )
 done
+#
+echo "BWAMEM alignmentswarmfile creation complete!"
+head -n 5 "$homedir"/bwa_to_picard.swarm
+# DEBUG Section
+sleep 3
 #
 # This part builds the samtools and GATK MarkDuplicates swarmfile
 #
@@ -176,6 +189,12 @@ done
 for dir in ${basedir[@]};
         do
                 ( [ -d "$dir" ] && cd $dir && echo "Entering into $dir and performing HaplotypeCaller per chromsome to write to swarm" && bash "$scriptdir"/process-haplotypecaller.sh )
+done
+#
+# Gather HaplotypeCaller gVCFs into a singular gVCF file
+for dir in ${basedir[@]};
+        do
+                ( [ -d "$dir" ] && cd $dir && echo "Entering into $dir and gathering gVCFs to write to swarm" && bash "$scriptdir"/process-HCgather.sh )
 done
 #
 ## Pre-Release v2.0-alpha complete
