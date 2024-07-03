@@ -108,18 +108,6 @@ scriptdir=$(pwd)
 cd $tmpdir
 > DatasetDirectories.tmp
 #
-#echo "What parent directory are your fastq files that you want to align?"
-#if ! read -e -t 60 FILE_DIR || (($? > 128)); then
-#        echo "User timeout" >&2
-#        exit 1
-#fi
-#
-#echo "What do you want to name your base swarm?"
-#if ! read -e -t 60 SWARM_NAME || (($? > 128)); then
-#        echo "User timeout" >&2
-#        exit 1
-#fi
-#
 cd $FILE_DIR
 #
 find $PWD -mindepth 1 -maxdepth 1 -type d &> "$tmpdir"/DatasetDirectories.tmp
@@ -130,71 +118,196 @@ IFS=,$'\n' read -d '' basedir < DatasetDirectories.tmp
 #
 cd $FILE_DIR # Change into the parent directory
 #
-# Begin the loop section to work on generating swarmfiles.
-# Firstly, we generate the alignment sample tables
+## Begin the loop section to work on generating swarmfiles. The idea here is to create each section into a function so that the script will go in to the directories and check to see if certain files exist and if so, skip the creation of the swarm file. If it is only half done then it *should* only create those that are needed.
 #
-for dir in ${basedir[@]};
+#
+tables(){ # This function is to generate the initial sample tables for the rest of the pipeline
+                for dir in ${basedir[@]};
         do
-                ( [ -d "$dir" ] && cd $dir && echo "Entering into $dir and generating alignment tables" && bash "$scriptdir"/table-generation.sh )
-done
+                 cd "$dir";
+                (  for file in "$dir"/*.runs.table
+                do
+                if ! [ -e "$file" ]
+                then
+                        echo "Building table for "$dir""; bash "$scriptdir"/table-generation.sh
+                else
+                        echo "Skipping "$dir""; exit 1
+                fi
+        done )
+        done
+}
 #
-# This part builds the BWAMEM2 alignment swarmfile
-#
-for dir in ${basedir[@]};
+aln(){
+        for dir in ${basedir[@]};
         do
-                ( [ -d "$dir" ] && cd $dir && bash "$scriptdir"/process-BWA.sh )
-done
-#
-echo "BWAMEM alignmentswarmfile creation complete!"
-head -n 5 "$homedir"/bwa_to_picard.swarm
-# DEBUG Section
-sleep 3
+                cd "$dir";
+                ( for file in "$dir"/bwa_bam/sort_*.bam
+                do
+                        wcf=$(find "$dir" -name "*.fastq.gz" | wc -l);
+                        echo $wcf
+                                if [ -e "$file" ]
+                                then
+                                        wcb=$(find "$dir"/bwa_bam/ -name "sort_*.bam" | wc -l); echo $wcb;
+                                else
+                                        wcb=0; echo $wcb
+                                fi
+                        if ! [ $((wcf/2)) == "$wcb" ]
+                        then
+                                echo "Making alignment swarm for "$dir""; bash "$scriptdir"/process-BWA.sh
+                        else
+                                echo "Skipping "$dir""; exit 1
+                        fi
+                done )
+        done
+}
 #
 # This part builds the samtools and GATK MarkDuplicates swarmfile
 #
-for dir in ${basedir[@]};
+markdup(){
+        for dir in ${basedir[@]};
         do
-                ( [ -d "$dir" ] && cd $dir && echo "Entering into $dir and generating sorted MarkDuplicates swarm" && bash "$scriptdir"/process-sortmd.sh )
-done
+                cd "$dir";
+                ( for file in "$dir"/dedup_bam/*.sort.md.bam
+                do
+                        wcs=$(find "$dir"/bwa_bam/ -name "*.bam" | wc -l);
+                        wcf=$(find "$dir" -name "*fastq.gz" | wc -l);
+                        echo $wcs
+                                if [ -e "$file" ]
+                                then
+                                        wcd=$(find "$dir"/dedup_bam/ -name "*.sort.md.bam" | wc -l); echo $wcd;
+                                else
+                                        wcd=0; echo $wcd
+                                fi
+                                if ! [ -e $file ] && [ $((wcf/2)) == "$wcs" ]
+                        then
+                                echo "Making sorted mark duplicates swarm for "$dir""; bash "$scriptdir"/process-sortmd.sh
+                        else
+                                echo "Skipping "$dir""; exit 1
+                        fi
+                done )
+        done
+}
 #
 # Now build the BQSR Recal table swarmfile
 #
-for dir in ${basedir[@]};
+bqsrtables(){
+        for dir in ${basedir[@]};
         do
-                ( [ -d "$dir" ] && cd $dir && echo "Entering into $dir and generating BQSR tables swarm" && bash "$scriptdir"/process-BQSR.sh )
-done
+                cd "$dir";
+                ( for file in "$dir"/dedup_bam/*.sort.md.bam
+                        do
+                                wcr=$(find "$dir"/BQSR/tables -name "*_recal.table" | wc -l);
+                                echo $wcr # debug line
+                                        if [ -e $file ] && [ $wcr == 40 ]
+                                        then
+                                                echo "Skipping ""$dir"""; exit 1
+                                        else
+                                                echo "Making BQSR tables for ""$dir"""; bash "$scriptdir"/process-BQSR.sh
+                                        fi
+                done )
+        done
+}
 #
 # Gather BQSR Reports
 #
-for dir in ${basedir[@]};
+bqsrgather(){
+        for dir in ${basedir[@]};
         do
-                ( [ -d "$dir" ] && cd $dir && echo "Entering into $dir and gathering BQSR tables to write to swarm" && bash "$scriptdir"/process-BQSRreportsGather.sh )
-done
-#
+                cd "$dir";
+                ( for file in "$dir"/BQSR/tables/*.bqsrgathered.reports.list
+                        do
+                                wcr=$(find "$dir"/BQSR/tables -name "*_recal.table" | wc -l);
+                                echo $wcr # debug line
+                                if [ -e $file ] && [ $wcr == 40 ]
+                                then
+                                        echo "Skipping ""$dir"""; exit 1
+                                else
+                                        echo "Gathering BQSR tables for ""$dir"""; bash "$scriptdir"/process-BQSRreportsGather.sh
+                                fi
+                done )
+        done
+}
 # Apply BaseRecalibration by chromosome
 #
-for dir in ${basedir[@]};
+applybqsr(){
+        for dir in ${basedir[@]};
         do
-                ( [ -d "$dir" ] && cd $dir && echo "Entering into $dir and applying BQSR tables to write to swarm" && bash "$scriptdir"/process-applybqsr.sh )
-done
+                cd "$dir";
+                ( for file in "$dir"/BQSR/tables/*.bqsrgathered.reports.list
+                        do
+                                wcb=$(find "$dir"/BQSR/BQSR_chr/ -name "*.BQSR.bam" | wc -l);
+                                echo $wcb # debug line
+                                if [ -e $file ] && [ $wcb == 40 ]
+                                then
+                                        echo "Skipping ""$dir"""; exit 1
+                                else
+                                        echo "Creating ApplyBQSR swarm for ""$dir"""; bash "$scriptdir"/process-applybqsr.sh
+                                fi
+                done )
+        done
+}
 #
 # Gather BQSR bam files into a singular BQSR bam file
 #
-for dir in ${basedir[@]};
+bqsrbamgather(){
+        for dir in ${basedir[@]};
         do
-                ( [ -d "$dir" ] && cd $dir && echo "Entering into $dir and gathering BQSR bams to merge" && bash "$scriptdir"/process-gatherBQSRbams.sh )
-done
+                cd "$dir";
+                ( for file in "$dir"/BQSR/*.BQSR.bam
+                        do
+                                wcb=$(find "$dir"/BQSR/BQSR_chr/ -name "*.BQSR.bam" | wc -l);
+                                echo $wcb # debug line
+                                if [ -e $file ] && [ $wcb == 40 ]
+                                then
+                                        echo "Skipping ""$dir"""; exit 1
+                                else
+                                        echo "Creating BQSR bam consolidation swarm for ""$dir"""; bash "$scriptdir"/process-gatherBQSRbams.sh
+                                fi
+                done )
+        done
+}
 #
 # Perform HaplotypeCaller per chromosome
-for dir in ${basedir[@]};
+#
+haplotypecaller(){
+        for dir in ${basedir[@]};
         do
-                ( [ -d "$dir" ] && cd $dir && echo "Entering into $dir and performing HaplotypeCaller per chromsome to write to swarm" && bash "$scriptdir"/process-haplotypecaller.sh )
-done
+                cd "$dir";
+                ( for file in "$dir"/BQSR/*.BQSR.bam
+                        do
+                                wch=$(find "$dir"/gVCF/HC/ -name "*.g.vcf.gz" | wc -l);
+                                echo $wch # debug line
+                                if [ -e $file ] && [ $wch == 40 ]
+                                then
+                                        echo "Skipping ""$dir"""; exit 1
+                                else
+                                        echo "Creating swarm for ""$dir""'s haplotypecaller step"; bash "$scriptdir"/process-haplotypecaller.sh
+                                fi
+                done )
+        done
+}
 #
 # Gather HaplotypeCaller gVCFs into a singular gVCF file
-for dir in ${basedir[@]};
-        do
-                ( [ -d "$dir" ] && cd $dir && echo "Entering into $dir and gathering gVCFs to write to swarm" && bash "$scriptdir"/process-HCgather.sh )
-done
 #
-## Pre-Release v2.0-alpha complete
+hcgather(){
+        for dir in ${basedir[@]};
+        do
+                cd "$dir";
+                ( for file in "$dir"/HC/*_g.vcf.gz
+                        do
+                                wch=$(find "$dir"/gVCF/HC/ -name "*.g.vcf.gz" | wc -l);
+                                echo $wch # debug line
+                                if [ -e $file ] && [ $wch == 40 ]
+                                then
+                                        echo "Skipping ""$dir"""; exit 1
+                                else
+                                        echo "Creating gVCF consolidation swarm for ""$dir"""; bash "$scriptdir"/process-HCgather.sh
+                                fi
+                done )
+        done
+}
+#
+## Functions have now been created up until the haplotypecaller step. Here the pipeline can be forked from here to the next step of conversion from BAM to CRAM, recompression of gVCFs, cleanup and stats generation
+#
+## Now we call the aforementioned functions to create the swarmfiles
+#
