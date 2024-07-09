@@ -669,7 +669,7 @@ then
 elif [ -s bqsr_gather_BQSRReports.swarm ]
 then
 	ReportsGatherresubmit
-elif [ -s ApplyBQSR.swarm ]
+elif [ -s bqsr_ApplyBQSR.swarm ]
 then
 	ApplyBQSRresubmit
 elif [ -s bqsr_gatherBQSRBams.swarm ]
