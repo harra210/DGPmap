@@ -44,7 +44,7 @@ if [ "$FQ_IN" = "NISC" ];
 #
 # Now to fully generate the swarmfile
 #
-        echo "cd "$BQSRchr_DIR"; gatk --java-options \"-Xmx6G\" GatherBamFiles "${bqsrbamfiles[*]/#/$PREFIX}" --output "$BQSR_DIR"/"${FN[0]}".BQSR.bam" >> "$homedir"/bqsr_gatherBQSRBams.swarm
+        echo "cd "$BQSRchr_DIR"; gatk --java-options \"-Xmx6G\" GatherBamFiles "${bqsrbamfiles[*]/#/$PREFIX}" -O "$BQSR_DIR"/"${FN[0]}".BQSR.bam" >> "$homedir"/bqsr_gatherBQSRBams.swarm
 #
 ## For SRA-style FastQ inputs
 #
@@ -67,7 +67,7 @@ elif [ "$FQ_IN" = "SRA" ];
 #
 # Now to fully generate the swarmfile
 #
-        echo "cd "$BQSRchr_DIR"; gatk --java-options \"-Xmx6G\" GatherBamFiles "${bqsrbamfiles[*]/#/$PREFIX}" --output "$BQSR_DIR"/"${FN[0]}".BQSR.bam" >> "$homedir"/bqsr_gatherBQSRBams.swarm
+        echo "cd "$BQSRchr_DIR"; gatk --java-options \"-Xmx6G\" GatherBamFiles "${bqsrbamfiles[*]/#/$PREFIX}" -O "$BQSR_DIR"/"${FN[0]}".BQSR.bam" >> "$homedir"/bqsr_gatherBQSRBams.swarm
 else
         exit 1
 fi
