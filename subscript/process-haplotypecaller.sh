@@ -30,10 +30,10 @@ if [ "$FQ_IN" = "NISC" ];
 #
 	while read g
 		do
-		echo "cd "$BQSR_DIR"; gatk -- java-options \"-Xmx4G\" HaplotypeCaller -R "$CanFam4_Ref" --tmp-dir /lscratch/\$SLURM_JOB_ID -I "${FN[0]}".BQSR.bam -L "$g" -O "$HC_DIR"/"${FN[0]}"_"$g".g.vcf.gz -ERC GVCF" >> "$homedir"/haplotypecaller.swarm
+		echo "cd "$BQSR_DIR"; gatk --java-options \"-Xmx4G\" HaplotypeCaller -R "$CanFam4_Ref" --tmp-dir /lscratch/\$SLURM_JOB_ID -I "${FN[0]}".BQSR.bam -L "$g" -O "$HC_DIR"/"${FN[0]}"_"$g".g.vcf.gz -ERC GVCF" >> "$homedir"/haplotypecaller.swarm
 	done < "$interval_list"
 #
-	echo "cd "$BQSR_DIR"; gatk -- java-options \"-Xmx4G\" HaplotypeCaller -R "$CanFam4_Ref" --tmp-dir /lscratch/\$SLURM_JOB_ID -I "${FN[0]}".BQSR.bam -XL "$interval_list" -O "$HC_DIR"/"${FN[0]}"_chrY.g.vcf.gz -ERC GVCF" >> "$homedir"/haplotypecaller.swarm
+	echo "cd "$BQSR_DIR"; gatk --java-options \"-Xmx4G\" HaplotypeCaller -R "$CanFam4_Ref" --tmp-dir /lscratch/\$SLURM_JOB_ID -I "${FN[0]}".BQSR.bam -XL "$interval_list" -O "$HC_DIR"/"${FN[0]}"_chrY.g.vcf.gz -ERC GVCF" >> "$homedir"/haplotypecaller.swarm
 #
 ## For SRA-style inputs
 elif [ "$FQ_IN" = "SRA" ];
@@ -44,10 +44,10 @@ elif [ "$FQ_IN" = "SRA" ];
 #
 	while read g
 		do
-echo "cd "$BQSR_DIR"; gatk -- java-options \"-Xmx4G\" HaplotypeCaller -R "$CanFam4_Ref" --tmp-dir /lscratch/\$SLURM_JOB_ID -I "${FN[0]}".BQSR.bam -L "$g" -O "$HC_DIR"/"${FN[0]}"_"$g".g.vcf.gz -ERC GVCF" >> "$homedir"/haplotypecaller.swarm
+echo "cd "$BQSR_DIR"; gatk --java-options \"-Xmx4G\" HaplotypeCaller -R "$CanFam4_Ref" --tmp-dir /lscratch/\$SLURM_JOB_ID -I "${FN[0]}".BQSR.bam -L "$g" -O "$HC_DIR"/"${FN[0]}"_"$g".g.vcf.gz -ERC GVCF" >> "$homedir"/haplotypecaller.swarm
 	done < "$interval_list"
 #
-	echo "cd "$BQSR_DIR"; gatk -- java-options \"-Xmx4G\" HaplotypeCaller -R "$CanFam4_Ref" --tmp-dir /lscratch/\$SLURM_JOB_ID -I "${FN[0]}".BQSR.bam -XL "$interval_list" -O "$HC_DIR"/"${FN[0]}"_chrY.g.vcf.gz -ERC GVCF" >> "$homedir"/haplotypecaller.swarm
+	echo "cd "$BQSR_DIR"; gatk --java-options \"-Xmx4G\" HaplotypeCaller -R "$CanFam4_Ref" --tmp-dir /lscratch/\$SLURM_JOB_ID -I "${FN[0]}".BQSR.bam -XL "$interval_list" -O "$HC_DIR"/"${FN[0]}"_chrY.g.vcf.gz -ERC GVCF" >> "$homedir"/haplotypecaller.swarm
 #
 else
 	exit 1

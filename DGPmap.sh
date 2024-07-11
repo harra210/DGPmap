@@ -647,9 +647,9 @@ fi
 read -p "Do the swarmfiles above have proper syntax? (Yes or No) " promptA
 while true; do
 	case "$promptA" in
-		[YyEeSs] ) break;;
-		[NnOo] ) echo "Troubleshoot scripts"; exit 1;;
-		* ) echo "Please answer yes or no.";; 
+		[YyEeSs]* ) break;;
+		[NnOo]* ) echo "Troubleshoot scripts"; exit 1;;
+		* ) echo "Re-enter answer: Yes or No.";; 
 	esac
 done
 #
