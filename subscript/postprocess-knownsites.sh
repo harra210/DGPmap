@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-## This is an internal script for the post-processing of the DGPmap pipeline that will rename and recompress gVCF files maximally.
+## This is an internal script for the post-processing of the DGPmap pipeline that will genotype gVCFs at known sites to be used to generate depth statistics later.
 #
 ## Variable definition section
 #
