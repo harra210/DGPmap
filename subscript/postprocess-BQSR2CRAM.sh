@@ -42,4 +42,4 @@ IFS=,$'\n' read -d '' -r -a changedname < "$TXT_DIR"/rename.txt
 #
 #cd "$FILE_DIR"
 #
-echo "cd "$BQSR_DIR"; cp "${FN[0]}"_BQSR.bam /lscratch/\$SLURM_JOB_ID/"${FN[0]}"_BQSR.bam && gatk --java-options \"-Xmx6G\" PrintReads -R "$CanFam4_Ref" -I /lscratch/\$SLURM_JOB_ID/"${FN[0]}"_BQSR.bam -O "$FILE_DIR""${changedname[0]}".BQSR.cram -OBM true -OBI false && samtools index -@ \$SLURM_CPUS_PER_TASK -c "$FILE_DIR""${changedname[0]}".BQSR.cram && cp "$TXT_DIR"/"${FN[0]}".sort.md.metrics.txt "$TXT_DIR"/"${changedname[0]}".sort.md.metrics.txt" >> "$homedir"/BQSR2CRAM_Rename.swarm
+echo "cd "$BQSR_DIR"; cp "${FN[0]}".BQSR.bam /lscratch/\$SLURM_JOB_ID/"${FN[0]}".BQSR.bam && gatk --java-options \"-Xmx6G\" PrintReads -R "$CanFam4_Ref" -I /lscratch/\$SLURM_JOB_ID/"${FN[0]}".BQSR.bam -O "$FQ_DIR"/"${changedname[0]}".BQSR.cram -OBM true -OBI false && samtools index -@ \$SLURM_CPUS_PER_TASK -c "$FQ_DIR"/"${changedname[0]}".BQSR.cram && cp "$TXT_DIR"/"${FN[0]}".sort.md.metrics.txt "$TXT_DIR"/"${changedname[0]}".sort.md.metrics.txt" >> "$homedir"/postprocess-BQSR2CRAM.swarm
