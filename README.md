@@ -90,6 +90,17 @@ Parent directory
 ```
 For runs created by the SRA database the table generation should be able to handle both single run samples as well as multi-run samples under the auspice of using the BioSample number as the means of naming the Sample Name.
 
-## Step 2 - Alignment
+## Step 2 - Alignment with BWA-MEM2
+
+```
+bwa-mem2 mem -K 100000000  -t NUM_THREADS -Y \
+-R READGROUPINFO \
+PATH_TO_UU_Cfam_GSD_1.0_ROSY.fa_with_index \
+fq1.gz fq2.gz | samtools view -bS - >  /tmp/SAMPLE.bam 
+```
+
+This command is inspired by [Reiger et al. Functional equivalence of genome sequencing analysis](https://www.nature.com/articles/s41467-018-06159-4) and by 
+discussions with colleagues. The -K option removes non-determinism in the fragment length distributions identified using different numbers of threads. -Y uses
+soft clipping for supplementary alignments, which may aid down stream structural variation analyses. 
 
 
