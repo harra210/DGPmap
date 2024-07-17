@@ -61,16 +61,26 @@ The companion SRA download package is a script that also integrates with our clu
 
 ## Step 1 - Table Generation
 
-The first step in the process is to create a reference table for the programs to pull data from in order to be able to place into their respective programs. This is mainly important for the alignment step with BWAMEM2 but becomes useful downstream. There are two main methods in which tables would be generated, based on the initial input flag for fastQ's (NISC or SRA)
+The first step in the process is to create a reference table for the programs to pull data from in order to be able to place into their respective programs. This is mainly important for the alignment step with BWAMEM2 but becomes useful downstream. There are two main methods in which tables would be generated, based on the initial input flag for fastQ's (Illumina or SRA).
 
-For fastQ's where individual reads were Illumina fastq's typically lab processed for samples sequenced by our lab at NISC:
+For FastQ's where individual reads are Illumina FastQ's the following is the expected hierarchy:
 ```
 Parent directory
 	|
 	 -> Folder containing fastQ reads
 ```
 
-For fastQ's downloaded from the SRA database:
+The expected FastQ file name structure for the pipeline to work on is as follows:
+```
+*_S1_L001_R1_001.fastq.gz
+```
+
+Illumina caveat: The table-generation script does rely on 1 pair of FastQ's per subfolder in the parent directory so that it can iterate correctly
+```bash
+#Line 47 of table-generation.sh
+find $PWD -maxdepth 2 -name "*L004_R1_001.fastq.gz" -printf '%h\n' &> "$tmpdir"/single_dir.tmp # Note: This will need to be modified to garner a unique result
+```
+For FastQ's downloaded from the SRA database:
 ```
 Parent directory
 	|
@@ -79,3 +89,7 @@ Parent directory
 		 -> Experiment Run Folders
 ```
 For runs created by the SRA database the table generation should be able to handle both single run samples as well as multi-run samples under the auspice of using the BioSample number as the means of naming the Sample Name.
+
+## Step 2 - Alignment
+
+
