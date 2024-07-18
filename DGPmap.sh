@@ -86,6 +86,7 @@ export interval_list
 homedir=$(pwd)
 export homedir
 #
+mkdir -p ../tmp # Make tmp directory to place generated temp files if it doesn't already exist.
 cd ../tmp
 tmpdir=$(pwd)
 export tmpdir
