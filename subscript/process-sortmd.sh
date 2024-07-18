@@ -15,7 +15,7 @@ cd dedup_bam
 MD_DIR=$(pwd)
 cd $FQ_DIR
 #
-if [ "$FQ_IN" = "NISC" ];
+if [ "$FQ_IN" = "Illumina" ];
 then
 # Capture the first row, first column value of the table which will give the array the file name and allow dynamic usage
 FN=( $(awk 'NR==1{print $1; exit}' "$TXT_DIR"/final_header.txt ) )

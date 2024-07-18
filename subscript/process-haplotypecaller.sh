@@ -20,8 +20,8 @@ cd $FQ_DIR
 #
 ## End Variable Definitions
 #
-## For NISC-style inputs
-if [ "$FQ_IN" = "NISC" ];
+## For Illumina-style inputs
+if [ "$FQ_IN" = "Illumina" ];
 	then
 # Generate the sample name via awk from the original sample table
 	FN=( $(awk 'NR==1{print $1; exit}' "$TXT_DIR"/final_header.txt ) )

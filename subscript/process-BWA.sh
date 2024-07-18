@@ -15,7 +15,7 @@ cd $FQ_DIR
 # Table is broken down into SM LB ID PU R1 R2
 # Sample (SM) will be the external sample name and will be renamed with the internal ID names at the very end.
 # 
-if [ "$FQ_IN" = "NISC" ];
+if [ "$FQ_IN" = "Illumina" ];
 then
 # Capture the first row, first column value of the table which will give the array the file name and allow dynamic usage.
 FN=( $(awk 'NR==1{print $1; exit}' "$TXT_DIR"/final_header.txt ) )
