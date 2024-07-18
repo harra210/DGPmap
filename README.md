@@ -1,9 +1,9 @@
 # DGPmap
 NHGRI Dog Genome Project Whole Genome Sequencing Alignment Pipeline
 
-#### Last updated 24 June 2024
+#### Last updated 18 July 2024
 
-This is a working pipeline for processing Whole Genome Sequencing data for the NHGRI Dog Genome Project working group.  It is heavily inspiredby the pipeline created by [Jeff Kidd for Dog10K](https://github.com/jmkidd/dogmap)
+This is a working pipeline for processing Whole Genome Sequencing data for the NHGRI Dog Genome Project working group.  It is heavily inspired by the pipeline created by [Jeff Kidd for Dog10K](https://github.com/jmkidd/dogmap)
 
 ## Required files
 
@@ -209,7 +209,7 @@ gatk --java-options "-Xmx6G" GatherVcfs \
 
 Once the main computation portion is now complete, postprocessing can now begin. This involves conversion of the BAM files to CRAM, the recompression of gVCF files and the collection of various metrics required to generate stats per sample.
 
-# Flags
+### Flags
 ```
         -d, --directory; Parent directory of pipeline processed files. (Req'd)
         -f, --file; Space-delimited file containing Original name followed by new name.
@@ -221,7 +221,7 @@ This script allows for the user to input a two column space or tab-delimited fil
 
 In the event no file is supplied, the user is then prompted to supply a new name, to wit the user can opt to input the old name.
 
-# Conversion of BAM to CRAM
+### Conversion of BAM to CRAM
 ```
 gatk --java-options "-Xmx6G" PrintReads \
 -R PATH_TO_UU_Cfam_GSD_1.0_ROSY.fa \
@@ -235,9 +235,18 @@ gatk --java-options "-Xmx6G" PrintReads \
 
 This outputs an md5 file to be generated, and a rename of the markduplicates metrics file which will be used later generating stats.
 
-# gVCF Recompression
+### gVCF Recompression
 ```
 zcat ../gVCF/SAMPLE_g.vcf.gz | bgzip -@6 -l 9 -c > /CHANGEDNAME.g.vcf.gz && \
 tabix -p vcf -f /CHANGEDNAME.g.vcf.gz && \
 md5sum /CHANGEDNAME.g.vcf.gz > /CHANGEDNAME.g.vcf.gz.md5
 ```
+## Gathering useful QC metrics
+Useful QC metrics, including effective read depth and genotypes as sites on the Illumina HD array are gathered in the background while the conversion and recompression occurs.
+This will run several tools to calculate statistics and compile them into the `txt_files` directory. The resulting stats files can be merged into a single table for analysis and visualization using `DGPmap-combinestats.sh`.
+
+## Step 8 - Stats Cleanup
+
+This final, yet optional step, will parse through each directory and condense all the extranenous files and delete intermediate bam and gvcf files. The script prompts the user their intentions to delete. If it encounters a missing stats file that would've been created in Step 7, the user will again be prompted and asked if the user wishes to force delete files, which if so then the script will then force delete files and continue forward.
+
+# Changes
