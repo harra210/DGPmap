@@ -67,6 +67,22 @@ if [ -n "$*" ]; then
         exit 1
 fi
 #
+# Handle if the directory flag is empty to restart
+#if [[ $2 != true ]]; then
+#	echo "`cmd`: Missing directory"
+#	echo "You must specify a directory using -d or --directory"
+#	echo "Try '`cmd` -h' for more information."
+#	exit 1
+#fi
+#
+#Handle if the swarm flag is empty to restart
+#if [[ $SWARM_NAME != true ]]; then
+#	echo "`cmd`: Missing swarm name"
+#	echo "You must specify a swarm base name using -s or --swarm-name"
+#	echo "Try '`cmd` -h' for more information."
+#	exit 1
+#fi
+#
 ## Running script variable definitions to be exported to subscript
 #
 CanFam4_Ref="/data/Ostrander/Resources/CanFam4_GSD/BWAMEM2/UU_Cfam_GSD_1.0_ROSY.fa"
@@ -269,10 +285,10 @@ echo "Knownsites Swarm ID: " $jobid3
 jobid4=$(swarm -f postprocess-flagstat.swarm --time 2:00:00 --module samtools --logdir ~/job_outputs/samtools/flagstat/"$SWARM_NAME"_flagstat --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_flagstat --dependency=afterok:"$jobid1"")
 echo "Flagstat Swarm ID: " $jobid4
 #
-jobid5=$(swarm -f postprocess-insertmetrics.swarm --time 2:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/InsertMetrics/"$SWARM_NAME"_InsertMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_InsertMet --dependency=afterok:"$jobid1"")
+jobid5=$(swarm -f postprocess-insertmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.5.0.0,R/4.4 --logdir ~/job_outputs/gatk/InsertMetrics/"$SWARM_NAME"_InsertMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_InsertMet --dependency=afterok:"$jobid1"")
 echo "Insert Size Metrics Swarm ID: " $jobid5
 #
-jobid6=$(swarm -f postprocess-alignmentmetrics.swarm --time 2:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/AignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet --dependency=afterok:"$jobid1"")
+jobid6=$(swarm -f postprocess-alignmentmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/AlignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet --dependency=afterok:"$jobid1"")
 echo "Alignment Size Metrics Swarm ID: " $jobid6
 }
 #
@@ -283,10 +299,10 @@ echo "CRAM conversion Swarm ID: " $jobid1
 jobid4=$(swarm -f postprocess-flagstat.swarm --time 2:00:00 --module samtools --logdir ~/job_outputs/samtools/flagstat/"$SWARM_NAME"_flagstat --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_flagstat --dependency=afterok:"$jobid1"")
 echo "Flagstat Swarm ID: " $jobid4
 #
-jobid5=$(swarm -f postprocess-insertmetrics.swarm --time 2:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/InsertMetrics/"$SWARM_NAME"_InsertMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_InsertMet --dependency=afterok:"$jobid1"")
+jobid5=$(swarm -f postprocess-insertmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.5.0.0,R/4.4 --logdir ~/job_outputs/gatk/InsertMetrics/"$SWARM_NAME"_InsertMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_InsertMet --dependency=afterok:"$jobid1"")
 echo "Insert Size Metrics Swarm ID: " $jobid5
 #
-jobid6=$(swarm -f postprocess-alignmentmetrics.swarm --time 2:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/AignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet --dependency=afterok:"$jobid1"")
+jobid6=$(swarm -f postprocess-alignmentmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/AlignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet --dependency=afterok:"$jobid1"")
 echo "Alignment Size Metrics Swarm ID: " $jobid6
 }
 #
@@ -311,23 +327,23 @@ fullmetricsresub(){
 jobid4=$(swarm -f postprocess-flagstat.swarm --time 2:00:00 --module samtools --logdir ~/job_outputs/samtools/flagstat/"$SWARM_NAME"_flagstat --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_flagstat")
 echo "Flagstat Swarm ID: " $jobid4
 #
-jobid5=$(swarm -f postprocess-insertmetrics.swarm --time 2:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/InsertMetrics/"$SWARM_NAME"_InsertMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_InsertMet")
+jobid5=$(swarm -f postprocess-insertmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.5.0.0,R/4.4 --logdir ~/job_outputs/gatk/InsertMetrics/"$SWARM_NAME"_InsertMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_InsertMet")
 echo "Insert Size Metrics Swarm ID: " $jobid5
 #
-jobid6=$(swarm -f postprocess-alignmentmetrics.swarm --time 2:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/AignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet")
+jobid6=$(swarm -f postprocess-alignmentmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/AlignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet")
 echo "Alignment Size Metrics Swarm ID: " $jobid6
 }
 #
 metricsresub(){
-jobid5=$(swarm -f postprocess-insertmetrics.swarm --time 2:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/InsertMetrics/"$SWARM_NAME"_InsertMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_InsertMet")
+jobid5=$(swarm -f postprocess-insertmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.5.0.0,R/4.4 --logdir ~/job_outputs/gatk/InsertMetrics/"$SWARM_NAME"_InsertMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_InsertMet")
 echo "Insert Size Metrics Swarm ID: " $jobid5
 #
-jobid6=$(swarm -f postprocess-alignmentmetrics.swarm --time 2:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/AignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet")
+jobid6=$(swarm -f postprocess-alignmentmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/AlignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet")
 echo "Alignment Size Metrics Swarm ID: " $jobid6
 }
 #
 alignmentresub(){
-jobid6=$(swarm -f postprocess-alignmentmetrics.swarm --time 2:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/AignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet")
+jobid6=$(swarm -f postprocess-alignmentmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/AlignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet")
 echo "Alignment Size Metrics Swarm ID: " $jobid6
 }
 #

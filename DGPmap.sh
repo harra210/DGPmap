@@ -9,7 +9,7 @@
 # Currently only have one flag of use to be used in generating proper tables but this function will allow for modification later if different alignments are desired to be used. If that becomes the case, then that will necessitate the modification of subscripts.
 #
 # Fastq defaults
-FQ_IN="NISC"
+FQ_IN="Illumina"
 FILE_DIR=
 SWARM_NAME=
 #
@@ -86,6 +86,7 @@ export interval_list
 homedir=$(pwd)
 export homedir
 #
+mkdir -p ../tmp # Make tmp directory to place generated temp files if it doesn't already exist.
 cd ../tmp
 tmpdir=$(pwd)
 export tmpdir
@@ -644,13 +645,13 @@ else
 	exit 1
 fi
 ##
-read -p "Do the swarmfiles above have proper syntax? (Yes or No) " promptA
 while true; do
-	case "$promptA" in
-		[YyEeSs]* ) break;;
-		[NnOo]* ) echo "Troubleshoot scripts"; exit 1;;
-		* ) echo "Re-enter answer: Yes or No.";; 
-	esac
+read -p "Do the swarmfiles above have proper syntax? (Yes or No) " promptA
+case $promptA in
+	[YyEeSs]* ) break;;
+	[NnOo]* ) echo "Troubleshoot scripts"; exit 1;;
+	* ) echo "Re-enter answer: Yes or No";;
+esac
 done
 #
 ## If the user confirms that the syntax is correct we now run a if elif else loop to submit the right function to resubmit to the cluster. Currently how the script is written if a step fails, the rest of the pipeline fails. 
