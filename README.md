@@ -47,7 +47,7 @@ To invoke the main DGPmap script:
 ```
 DGPmap.sh [OPTION...]
 	-i, --input                      Parent input directory of the files initially looking to process.
-	-f, --fastq                      Set input fastq style format (default: NISC).
+	-f, --fastq                      Set input fastq style format (default: Illumina).
 	-s, --swarm-name                 Set the base swarm name for the pipeline, job specific names will be added on job submission.
 	-h, --help                       Print this message and exit.
 ```
