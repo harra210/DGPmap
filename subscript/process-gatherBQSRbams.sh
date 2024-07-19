@@ -21,9 +21,9 @@ cd $FQ_DIR
 #
 PREFIX="-I "
 #
-## For NISC-style FastQ inputs
+## For Illumina-style FastQ inputs
 #
-if [ "$FQ_IN" = "NISC" ];
+if [ "$FQ_IN" = "Illumina" ];
 	then
 	FN=( $(awk 'NR==1{print$1; exit}' "$TXT_DIR"/final_header.txt ) )
 #
