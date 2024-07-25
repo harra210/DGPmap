@@ -18,7 +18,7 @@ cmd(){ echo `basename $0`; }
 # Help command output
 usage(){
 	echo "\
-		`cmd` [OPTION...]
+	`cmd` [OPTION...]
 	-d, --directory; Parent directory of pipeline processed files.
 	-f, --file; Space-delimited file containing Original name followed by new name.
 	-s, --swarm-name; Set the base swarm name, any job specific names will be added on job submission.
@@ -67,21 +67,25 @@ if [ -n "$*" ]; then
         exit 1
 fi
 #
-# Handle if the directory flag is empty to restart
-#if [[ $2 != true ]]; then
-#	echo "`cmd`: Missing directory"
-#	echo "You must specify a directory using -d or --directory"
-#	echo "Try '`cmd` -h' for more information."
-#	exit 1
-#fi
-#
-#Handle if the swarm flag is empty to restart
-#if [[ $SWARM_NAME != true ]]; then
-#	echo "`cmd`: Missing swarm name"
-#	echo "You must specify a swarm base name using -s or --swarm-name"
-#	echo "Try '`cmd` -h' for more information."
-#	exit 1
-#fi
+## Verify that required flags were passed via command line
+if [[ -z $FILE_DIR ]] && [[ -z $SWARM_NAME ]]
+then
+	echo "Missing required flags!"
+	usage
+	exit 1
+elif [[ -z $FILE_DIR ]]
+then
+	echo "Missing input directory flag!"
+	echo "Try '`cmd` -h or `cmd` --help' for more information."
+	exit 1
+elif [[ -z $SWARM_NAME ]]
+then
+	echo "Missing swarm-name flag!"
+	echo "Try '`cmd` -h or `cmd` --help' for more information."
+        exit 1
+else
+	shift
+fi
 #
 ## Running script variable definitions to be exported to subscript
 #

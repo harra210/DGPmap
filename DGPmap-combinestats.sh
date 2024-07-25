@@ -64,31 +64,26 @@ for pass in 1 2; do
         fi
 done
 #
-cd scripts/
-scriptdir=$(pwd)
-export scriptdir
-combinepy=""$scriptdir"/postprocess-combinestats.py"
-#
-cd "$tmpdir"
-> DatasetDirectories.tmp
-#
-cd "$PARENT_DIR"
-#
-find $PWD -mindepth 1 -maxdepth 1 -type d &> "$tmpdir"/DatasetDirectories.tmp
-#
-cd "$tmpdir"
-#
-IFS=,$'\n' read -d '' basedir < DatasetDirectories.tmp
-#
-cd "$PARENT_DIR" # Change into the parent directory
-#done
-#
 # Handle positional arguments
 if [ -n "$*" ]; then
         echo "`cmd`: Extra arguments -- $*"
         echo "Try '`cmd` -h' for more information."
         exit 1
 fi
+## Section to make sure the directory flag was passed on the command line
+if [[ -z $PARENT_DIR ]]
+then
+	echo "Missing directory flag!"
+	echo "Try '`cmd` -h or `cmd` --help' for more information."
+        exit 1
+else
+	shift
+fi
+#
+cd scripts/
+scriptdir=$(pwd)
+export scriptdir
+combinepy=""$scriptdir"/postprocess-combinestats.py"
 #
 cd "$tmpdir"
 > DatasetDirectories.tmp
