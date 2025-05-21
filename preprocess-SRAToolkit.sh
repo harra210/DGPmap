@@ -7,7 +7,7 @@
 # if the dataset to be downloaded is known to have multiple reads per sample. If there is only 1 SRA run per sample then an if statement will create folders properly.
 #
 # getopts string
-opts="io:s:" # input (optional), output and swarm_name (req'd)
+opts="io:s:"
 #
 # Variables to set:
 INPUT=
@@ -57,8 +57,8 @@ for pass in 1 2; do
                 esac
                 shift
         done
-        if [ $pass -eq 1 ]; then ARGS=`getopt $opts $ARGS`
-                if [ $? != 0 ]; then error; exit 2; fi; set -- $ARGS
+	if [ $pass -eq 1 ]; then ARGS=`getopts $opts $ARGS`
+                if [ $? != 0 ]; then usage; exit 2; fi; set -- $ARGS
         fi
 done
 #
@@ -67,6 +67,27 @@ if [ -n "$*" ]; then
         echo "`cmd`: Extra arguments -- $*"
         echo "Try '`cmd` -h' for more information."
         exit 1
+fi
+#
+## Loop section to verify that required flags have been passed. Since -i --input is optional, it is not included in this verification loop.
+#
+if [[ -z $OUT_DIR ]] && [[ -z $SWARM_NAME ]]
+then
+        echo "Missing required output and swarm-name flags!"
+        echo echo "Try '`cmd` -h or `cmd` --help' for more information."
+        exit 1
+elif    [[ -z $OUT_DIR ]]
+then
+        echo "Missing output flag."
+        echo "Try '`cmd` -h or `cmd` --help' for more information."
+        exit 1
+elif [[ -z $SWARM_NAME ]]
+then
+        echo "Missing swarm flag."
+        echo "Try '`cmd` -h or `cmd` --help' for more information."
+        exit 1
+else
+        shift
 fi
 #
 ## Variable defining sections that are unrelated to the flag invokations
@@ -195,7 +216,7 @@ else
 	done
 fi
 #
-more "$homedir"/SRAtoolkit-fastqdump.swarm
+head -n 3 "$homedir"/SRAtoolkit-fastqdump.swarm
 echo ""
 fqverify(){
 	read -r -p "Is the previous swarmfile formatted correctly? [Y/N] " k
@@ -212,6 +233,7 @@ fqverify(){
 	esac
 }
 fqverify
+cd $homedir
 #
 jobid1=$(swarm -f SRAtoolkit-prefetch.swarm -g 4 -t 4 --time 24:00:00 --gres=lscratch:75 --module sratoolkit --logdir ~/job_outputs/SRA_Toolkit/Prefetch/"$SWARM_NAME" --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_Prefetch")
 echo "SRAtoolkit Prefetch Swarm ID: " $jobid1

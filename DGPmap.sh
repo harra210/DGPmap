@@ -22,8 +22,8 @@ cmd(){ echo `basename $0`; }
 # Help command output
 usage(){
 	echo "\
-		`cmd` [OPTION...]
-	-i, --input; Parent input directory of the files initially looking to process.
+	`cmd` [OPTION...]
+	-d, --directory; Parent input directory of the files initially looking to process.
 	-f, --fastq; Set input fastq style format (default:"$FQ_IN").
 	-s, --swarm-name; Set the base swarm name for the pipeline, job specific names will be added on job submission.
 	-h, --help; Print this message and exit.
@@ -46,7 +46,7 @@ for pass in 1 2; do
 		case $1 in
 			--) shift; break;;
 			-*) case $1 in
-				-i|--input)	export FILE_DIR=$2; shift;;
+				-d|--directory)	export FILE_DIR=$2; shift;;
 				-f|--fastq)	export FQ_IN=$2; shift;;
 				-s|--swarm-name)	export SWARM_NAME=$2; shift;;
 				-h|--help) usage; exit 1;;
@@ -70,7 +70,46 @@ if [ -n "$*" ]; then
 	echo "Try '`cmd` -h' for more information."
 	exit 1
 fi
-#echo "$FQ_IN"
+#
+## Loop section to verify that required flags have been passed.
+if [[ -z $FILE_DIR ]] && [[ $FQ_IN == "Illumina" ]] && [[ -z $SWARM_NAME ]]
+then
+	echo "Missing required flags!"
+	usage
+	exit 1
+elif [[ -z $FILE_DIR ]] && [[ -z $FQ_IN ]]
+then
+	echo "Missing multiple flags!"
+        echo "Try '`cmd` -h or `cmd` --help' for more information."
+        exit 1
+elif [[ -z $FILE_DIR ]] && [[ -z $SWARM_NAME ]]
+then
+       	echo "Missing multiple flags!"
+        echo "Try '`cmd` -h or `cmd` --help' for more information."
+        exit 1
+elif [[ -z $FQ_IN ]] && [[ -z $SWARM_NAME ]]
+then
+       	echo "Missing multiple flags!"
+        echo "Try '`cmd` -h or `cmd` --help' for more information."
+        exit 1
+elif [[ -z $FILE_DIR ]]
+then
+	echo "Missing input directory flag!"
+	echo "Try '`cmd` -h or `cmd` --help' for more information."
+        exit 1
+elif [[ -z $FQ_IN ]]
+then
+	echo "Missing FastQ-style flag!"
+	echo "Try '`cmd` -h or `cmd` --help' for more information."
+        exit 1
+elif [[ -z $SWARM_NAME ]]
+then
+	echo "Missing swarm name flag!"
+	echo "Try '`cmd` -h or `cmd` --help' for more information."
+        exit 1
+else
+	shift
+fi
 #
 # Variable Definition Sections that are able to be exported to subscripts. Note there are additional variables in subscripts but those are unable to be exported due to dynamics.
 #
@@ -86,8 +125,9 @@ export interval_list
 homedir=$(pwd)
 export homedir
 #
-mkdir -p ../tmp # Make tmp directory to place generated temp files if it doesn't already exist.
-cd ../tmp
+cd ../
+mkdir -p tmp
+cd tmp/
 tmpdir=$(pwd)
 export tmpdir
 #
@@ -295,7 +335,7 @@ hcgather(){
 	for dir in ${basedir[@]};
 	do
 		cd "$dir";
-		( for file in "$dir"/HC/*_g.vcf.gz
+		( for file in "$dir"/HC/*.g.vcf.gz
 			do
 				wch=$(find "$dir"/gVCF/HC/ -name "*.g.vcf.gz" | wc -l);
 				#echo $wch # debug line
