@@ -185,7 +185,8 @@ aln(){
 		cd "$dir";
 		( for file in "$dir"/bwa_bam/sort_*.bam
 		do
-			wcf=$(find "$dir" -name "*.fastq.gz" | wc -l);
+			wcf=$(find "$dir" -name "*.fastq.gz" | wc -l); # ORIGINAL LINE
+			#wcf=$(find "$dir" -name "*.fq.gz" | wc -l);
 			#echo $wcf
 				if [ -e "$file" ]
 				then
@@ -212,7 +213,8 @@ markdup(){
                 ( for file in "$dir"/dedup_bam/*.sort.md.bam
                 do
 			wcs=$(find "$dir"/bwa_bam/ -name "*.bam" | wc -l);
-			wcf=$(find "$dir" -name "*fastq.gz" | wc -l);
+			wcf=$(find "$dir" -name "*fastq.gz" | wc -l); # ORIGINAL LINE
+			#wcf=$(find "$dir" -name "*fq.gz" | wc -l);
 			#echo $wcs
                                 if [ -e "$file" ]
                                 then
@@ -295,7 +297,7 @@ bqsrbamgather(){
 	for dir in ${basedir[@]};
 	do
 		cd "$dir";
-		( for file in "$dir"/BQSR/*.BQSR.bam
+		( for file in "$dir"/BQSR/*.BQSR.bai
 			do
 				wcb=$(find "$dir"/BQSR/BQSR_chr/ -name "*.BQSR.bam" | wc -l);
 				#echo $wcb # debug line
@@ -423,28 +425,29 @@ echo ""
 ## Now all swarmfiles are hopefully generated successfull and now the functions to define whether to submit fully to the cluster or partially submit files to the cluster.
 #
 pipelinesubmit() {
-jobid1=$(swarm -f bwa_to_picard.swarm -g 72 -t 32 --gres=lscratch:300 --time 2-0 --module bwa-mem2,samtools --logdir ~/job_outputs/bwa_to_picard/"$SWARM_NAME"_FQ --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_FQ")
+jobid1=$(swarm -f bwa_to_picard.swarm -g 96 -t 32 --gres=lscratch:300 --time 2-0 --module bwa-mem2,samtools --logdir ~/job_outputs/bwa_to_picard/"$SWARM_NAME"_FQ --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_FQ")
+#jobid1=$(swarm -f bwa_to_picard.swarm -g 72 -t 32 --gres=lscratch:300 --time 2-0 --module bwa-mem2,samtools --logdir ~/job_outputs/bwa_to_picard/"$SWARM_NAME"_FQ --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_FQ")
 echo "BWAMEM Alignment swarm ID: "$jobid1""
 #
-jobid2=$(swarm -f mergeDedup.swarm -g 36 -t 20 --gres=lscratch:350 --time 2-0 --module samtools,GATK/4.4.0.0 --logdir ~/job_outputs/samtools/"$SWARM_NAME"_merge --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid1" --job-name "$SWARM_NAME"_Merge")
+jobid2=$(swarm -f mergeDedup.swarm -g 48 -t 20 --gres=lscratch:350 --time 2-0 --module samtools,GATK/4.6.0.0 --logdir ~/job_outputs/samtools/"$SWARM_NAME"_merge --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid1" --job-name "$SWARM_NAME"_Merge")
 echo "Merge and Markduplicates Swarm ID: "$jobid2""
 #
-jobid3=$(swarm -f bqsr_BaseRecalibrator.swarm -g 6 -t 6 -b 10 --gres=lscratch:75 --time 4:00:00 --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/BaseRecalibrator/"$SWARM_NAME"_BR --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid2" --job-name "$SWARM_NAME"_BR")
+jobid3=$(swarm -f bqsr_BaseRecalibrator.swarm -g 6 -t 6 -b 10 --gres=lscratch:75 --time 4:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/BaseRecalibrator/"$SWARM_NAME"_BR --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid2" --job-name "$SWARM_NAME"_BR")
 echo "BaseRecalibrator Swarm ID: "$jobid3""
 #
-jobid4=$(swarm -f bqsr_gatherBQSRReports.swarm -g 8 -t 4 -b 4 --gres=lscratch:75 --time 30:00 --partition=quick --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/GatherBQSRReports/"$SWARM_NAME"_GatherReports --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid3" --job-name "$SWARM_NAME"_GatherBQSRReports")
+jobid4=$(swarm -f bqsr_gatherBQSRReports.swarm -g 8 -t 4 -b 4 --gres=lscratch:75 --time 30:00 --partition=quick --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/GatherBQSRReports/"$SWARM_NAME"_GatherReports --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid3" --job-name "$SWARM_NAME"_GatherBQSRReports")
 echo "GatherBQSRReports Swarm ID: "$jobid4""
 #
-jobid5=$(swarm -f bqsr_ApplyBQSR.swarm -g 8 -t 6 -b 40 --gres=lscratch:350 --time 6:00:00 --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/BaseRecalibrator/"$SWARM_NAME"_ApplyBQSR --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid4" --job-name "$SWARM_NAME"_ApplyBQSR")
+jobid5=$(swarm -f bqsr_ApplyBQSR.swarm -g 8 -t 6 -b 40 --gres=lscratch:350 --time 6:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/BaseRecalibrator/"$SWARM_NAME"_ApplyBQSR --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid4" --job-name "$SWARM_NAME"_ApplyBQSR")
 echo "ApplyBQSR Swarm ID: "$jobid5""
 #
-jobid6=$(swarm -f bqsr_gatherBQSRBams.swarm -g 4 -t 4 --gres=lscratch:75 --time 4:00:00 --partition=quick --module GATK/4.4.0.0,samtools --logdir ~/job_outputs/gatk/GatherBams/"$SWARM_NAME"_GatherBams --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid5" --job-name "$SWARM_NAME"_GatherBams")
+jobid6=$(swarm -f bqsr_gatherBQSRBams.swarm -g 4 -t 4 --gres=lscratch:75 --time 4:00:00 --partition=quick --module GATK/4.6.0.0,samtools --logdir ~/job_outputs/gatk/GatherBams/"$SWARM_NAME"_GatherBams --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid5" --job-name "$SWARM_NAME"_GatherBams")
 echo "Gather BQSR Bams Swarm ID: "$jobid6""
 #
-jobid7=$(swarm -f haplotypecaller.swarm -g 8 -t 6 -b 5 --gres=lscratch:120 --time 48:00:00 --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/HaplotypeCaller/"$SWARM_NAME"_HC --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid6" --job-name "$SWARM_NAME"_HC")
+jobid7=$(swarm -f haplotypecaller.swarm -g 8 -t 6 -b 5 --gres=lscratch:120 --time 48:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/HaplotypeCaller/"$SWARM_NAME"_HC --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid6" --job-name "$SWARM_NAME"_HC")
 echo "HaplotypeCaller Swarm ID: "$jobid7""
 #
-jobid8=$(swarm -f hc_gathergvcfs.swarm -g 3 -t 4 -b 2 --gres=lscratch:75 --time 60:00 --partition=quick --module GATK/4.4.0.0,samtools --logdir ~/job_outputs/gatk/gathervcfs/"$SWARM_NAME"_GatherHC --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid7" --job-name "$SWARM_NAME"_GatherHC")
+jobid8=$(swarm -f hc_gathergvcfs.swarm -g 3 -t 4 -b 2 --gres=lscratch:75 --time 60:00 --partition=quick --module GATK/4.6.0.0,samtools --logdir ~/job_outputs/gatk/gathervcfs/"$SWARM_NAME"_GatherHC --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid7" --job-name "$SWARM_NAME"_GatherHC")
 echo "Gather gVCFs Swarm ID: "$jobid8""
 }
 #
@@ -452,100 +455,100 @@ echo "Gather gVCFs Swarm ID: "$jobid8""
 ## First is if mergeDedup fails, note if the BWA portion fails, its easier to simply just resubmit the entire pipeline so no function req'd for just BWA onwards.
 #
 mergeresubmit(){
-jobid2=$(swarm -f mergeDedup.swarm -g 36 -t 20 --gres=lscratch:350 --time 2-0 --module samtools,GATK/4.4.0.0 --logdir ~/job_outputs/samtools/"$SWARM_NAME"_merge --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_Merge")
+jobid2=$(swarm -f mergeDedup.swarm -g 48 -t 20 --gres=lscratch:350 --time 2-0 --module samtools,GATK/4.6.0.0 --logdir ~/job_outputs/samtools/"$SWARM_NAME"_merge --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_Merge")
 echo "Merge and Markduplicates Swarm ID: "$jobid2""
 #
-jobid3=$(swarm -f bqsr_BaseRecalibrator.swarm -g 6 -t 6 -b 10 --gres=lscratch:75 --time 4:00:00 --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/BaseRecalibrator/"$SWARM_NAME"_BR --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid2" --job-name "$SWARM_NAME"_BR")
+jobid3=$(swarm -f bqsr_BaseRecalibrator.swarm -g 6 -t 6 -b 10 --gres=lscratch:75 --time 4:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/BaseRecalibrator/"$SWARM_NAME"_BR --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid2" --job-name "$SWARM_NAME"_BR")
 echo "BaseRecalibrator Swarm ID: "$jobid3""
 #
-jobid4=$(swarm -f bqsr_gatherBQSRReports.swarm -g 8 -t 4 -b 4 --gres=lscratch:75 --time 30:00 --partition=quick --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/GatherBQSRReports/"$SWARM_NAME"_GatherReports --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid3" --job-name "$SWARM_NAME"_GatherBQSRReports")
+jobid4=$(swarm -f bqsr_gatherBQSRReports.swarm -g 8 -t 4 -b 4 --gres=lscratch:75 --time 30:00 --partition=quick --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/GatherBQSRReports/"$SWARM_NAME"_GatherReports --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid3" --job-name "$SWARM_NAME"_GatherBQSRReports")
 echo "GatherBQSRReports Swarm ID: "$jobid4""
 #
-jobid5=$(swarm -f bqsr_ApplyBQSR.swarm -g 8 -t 6 -b 40 --gres=lscratch:350 --time 6:00:00 --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/BaseRecalibrator/"$SWARM_NAME"_ApplyBQSR --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid4" --job-name "$SWARM_NAME"_ApplyBQSR")
+jobid5=$(swarm -f bqsr_ApplyBQSR.swarm -g 8 -t 6 -b 40 --gres=lscratch:350 --time 6:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/BaseRecalibrator/"$SWARM_NAME"_ApplyBQSR --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid4" --job-name "$SWARM_NAME"_ApplyBQSR")
 echo "ApplyBQSR Swarm ID: "$jobid5""
 #
-jobid6=$(swarm -f bqsr_gatherBQSRBams.swarm -g 4 -t 4 --gres=lscratch:75 --time 4:00:00 --partition=quick --module GATK/4.4.0.0,samtools --logdir ~/job_outputs/gatk/GatherBams/"$SWARM_NAME"_GatherBams --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid5" --job-name "$SWARM_NAME"_GatherBams")
+jobid6=$(swarm -f bqsr_gatherBQSRBams.swarm -g 4 -t 4 --gres=lscratch:75 --time 4:00:00 --partition=quick --module GATK/4.6.0.0,samtools --logdir ~/job_outputs/gatk/GatherBams/"$SWARM_NAME"_GatherBams --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid5" --job-name "$SWARM_NAME"_GatherBams")
 echo "Gather BQSR Bams Swarm ID: "$jobid6""
 #
-jobid7=$(swarm -f haplotypecaller.swarm -g 8 -t 6 -b 5 --gres=lscratch:120 --time 48:00:00 --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/HaplotypeCaller/"$SWARM_NAME"_HC --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid6" --job-name "$SWARM_NAME"_HC")
+jobid7=$(swarm -f haplotypecaller.swarm -g 8 -t 6 -b 5 --gres=lscratch:120 --time 48:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/HaplotypeCaller/"$SWARM_NAME"_HC --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid6" --job-name "$SWARM_NAME"_HC")
 echo "HaplotypeCaller Swarm ID: "$jobid7""
 #
-jobid8=$(swarm -f hc_gathergvcfs.swarm -g 3 -t 4 -b 2 --gres=lscratch:75 --time 60:00 --partition=quick --module GATK/4.4.0.0,samtools --logdir ~/job_outputs/gatk/gathervcfs/"$SWARM_NAME"_GatherHC --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid7" --job-name "$SWARM_NAME"_GatherHC")
+jobid8=$(swarm -f hc_gathergvcfs.swarm -g 3 -t 4 -b 2 --gres=lscratch:75 --time 60:00 --partition=quick --module GATK/4.6.0.0,samtools --logdir ~/job_outputs/gatk/gathervcfs/"$SWARM_NAME"_GatherHC --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid7" --job-name "$SWARM_NAME"_GatherHC")
 echo "Gather gVCFs Swarm ID: "$jobid8""
 }
 #
 BQSRresubmit(){
-jobid3=$(swarm -f bqsr_BaseRecalibrator.swarm -g 6 -t 6 -b 10 --gres=lscratch:75 --time 4:00:00 --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/BaseRecalibrator/"$SWARM_NAME"_BR --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_BR")
+jobid3=$(swarm -f bqsr_BaseRecalibrator.swarm -g 6 -t 6 -b 10 --gres=lscratch:75 --time 4:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/BaseRecalibrator/"$SWARM_NAME"_BR --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_BR")
 echo "BaseRecalibrator Swarm ID: "$jobid3""
 #
-jobid4=$(swarm -f bqsr_gatherBQSRReports.swarm -g 8 -t 4 -b 4 --gres=lscratch:75 --time 30:00 --partition=quick --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/GatherBQSRReports/"$SWARM_NAME"_GatherReports --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid3" --job-name "$SWARM_NAME"_GatherBQSRReports")
+jobid4=$(swarm -f bqsr_gatherBQSRReports.swarm -g 8 -t 4 -b 4 --gres=lscratch:75 --time 30:00 --partition=quick --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/GatherBQSRReports/"$SWARM_NAME"_GatherReports --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid3" --job-name "$SWARM_NAME"_GatherBQSRReports")
 echo "GatherBQSRReports Swarm ID: "$jobid4""
 #
-jobid5=$(swarm -f bqsr_ApplyBQSR.swarm -g 8 -t 6 -b 40 --gres=lscratch:350 --time 6:00:00 --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/BaseRecalibrator/"$SWARM_NAME"_ApplyBQSR --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid4" --job-name "$SWARM_NAME"_ApplyBQSR")
+jobid5=$(swarm -f bqsr_ApplyBQSR.swarm -g 8 -t 6 -b 40 --gres=lscratch:350 --time 6:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/BaseRecalibrator/"$SWARM_NAME"_ApplyBQSR --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid4" --job-name "$SWARM_NAME"_ApplyBQSR")
 echo "ApplyBQSR Swarm ID: "$jobid5""
 #
-jobid6=$(swarm -f bqsr_gatherBQSRBams.swarm -g 4 -t 4 --gres=lscratch:75 --time 4:00:00 --partition=quick --module GATK/4.4.0.0,samtools --logdir ~/job_outputs/gatk/GatherBams/"$SWARM_NAME"_GatherBams --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid5" --job-name "$SWARM_NAME"_GatherBams")
+jobid6=$(swarm -f bqsr_gatherBQSRBams.swarm -g 4 -t 4 --gres=lscratch:75 --time 4:00:00 --partition=quick --module GATK/4.6.0.0,samtools --logdir ~/job_outputs/gatk/GatherBams/"$SWARM_NAME"_GatherBams --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid5" --job-name "$SWARM_NAME"_GatherBams")
 echo "Gather BQSR Bams Swarm ID: "$jobid6""
 #
-jobid7=$(swarm -f haplotypecaller.swarm -g 8 -t 6 -b 5 --gres=lscratch:120 --time 48:00:00 --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/HaplotypeCaller/"$SWARM_NAME"_HC --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid6" --job-name "$SWARM_NAME"_HC")
+jobid7=$(swarm -f haplotypecaller.swarm -g 8 -t 6 -b 5 --gres=lscratch:120 --time 48:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/HaplotypeCaller/"$SWARM_NAME"_HC --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid6" --job-name "$SWARM_NAME"_HC")
 echo "HaplotypeCaller Swarm ID: "$jobid7""
 #
-jobid8=$(swarm -f hc_gathergvcfs.swarm -g 3 -t 4 -b 2 --gres=lscratch:75 --time 60:00 --partition=quick --module GATK/4.4.0.0,samtools --logdir ~/job_outputs/gatk/gathervcfs/"$SWARM_NAME"_GatherHC --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid7" --job-name "$SWARM_NAME"_GatherHC")
+jobid8=$(swarm -f hc_gathergvcfs.swarm -g 3 -t 4 -b 2 --gres=lscratch:75 --time 60:00 --partition=quick --module GATK/4.6.0.0,samtools --logdir ~/job_outputs/gatk/gathervcfs/"$SWARM_NAME"_GatherHC --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid7" --job-name "$SWARM_NAME"_GatherHC")
 echo "Gather gVCFs Swarm ID: "$jobid8""
 }
 #
 ReportsGatherresubmit(){
-jobid4=$(swarm -f bqsr_gatherBQSRReports.swarm -g 8 -t 4 -b 4 --gres=lscratch:75 --time 30:00 --partition=quick --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/GatherBQSRReports/"$SWARM_NAME"_GatherReports --sbatch "--mail-type=ALL,TIME_LIMIT_90 --job-name "$SWARM_NAME"_GatherBQSRReports")
+jobid4=$(swarm -f bqsr_gatherBQSRReports.swarm -g 8 -t 4 -b 4 --gres=lscratch:75 --time 30:00 --partition=quick --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/GatherBQSRReports/"$SWARM_NAME"_GatherReports --sbatch "--mail-type=ALL,TIME_LIMIT_90 --job-name "$SWARM_NAME"_GatherBQSRReports")
 echo "GatherBQSRReports Swarm ID: "$jobid4""
 #
-jobid5=$(swarm -f bqsr_ApplyBQSR.swarm -g 8 -t 6 -b 40 --gres=lscratch:350 --time 6:00:00 --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/BaseRecalibrator/"$SWARM_NAME"_ApplyBQSR --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid4" --job-name "$SWARM_NAME"_ApplyBQSR")
+jobid5=$(swarm -f bqsr_ApplyBQSR.swarm -g 8 -t 6 -b 40 --gres=lscratch:350 --time 6:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/BaseRecalibrator/"$SWARM_NAME"_ApplyBQSR --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid4" --job-name "$SWARM_NAME"_ApplyBQSR")
 echo "ApplyBQSR Swarm ID: "$jobid5""
 #
-jobid6=$(swarm -f bqsr_gatherBQSRBams.swarm -g 4 -t 4 --gres=lscratch:75 --time 4:00:00 --partition=quick --module GATK/4.4.0.0,samtools --logdir ~/job_outputs/gatk/GatherBams/"$SWARM_NAME"_GatherBams --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid5" --job-name "$SWARM_NAME"_GatherBams")
+jobid6=$(swarm -f bqsr_gatherBQSRBams.swarm -g 4 -t 4 --gres=lscratch:75 --time 4:00:00 --partition=quick --module GATK/4.6.0.0,samtools --logdir ~/job_outputs/gatk/GatherBams/"$SWARM_NAME"_GatherBams --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid5" --job-name "$SWARM_NAME"_GatherBams")
 echo "Gather BQSR Bams Swarm ID: "$jobid6""
 #
-jobid7=$(swarm -f haplotypecaller.swarm -g 8 -t 6 -b 5 --gres=lscratch:120 --time 48:00:00 --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/HaplotypeCaller/"$SWARM_NAME"_HC --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid6" --job-name "$SWARM_NAME"_HC")
+jobid7=$(swarm -f haplotypecaller.swarm -g 8 -t 6 -b 5 --gres=lscratch:120 --time 48:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/HaplotypeCaller/"$SWARM_NAME"_HC --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid6" --job-name "$SWARM_NAME"_HC")
 echo "HaplotypeCaller Swarm ID: "$jobid7""
 #
-jobid8=$(swarm -f hc_gathergvcfs.swarm -g 3 -t 4 -b 2 --gres=lscratch:75 --time 60:00 --partition=quick --module GATK/4.4.0.0,samtools --logdir ~/job_outputs/gatk/gathervcfs/"$SWARM_NAME"_GatherHC --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid7" --job-name "$SWARM_NAME"_GatherHC")
+jobid8=$(swarm -f hc_gathergvcfs.swarm -g 3 -t 4 -b 2 --gres=lscratch:75 --time 60:00 --partition=quick --module GATK/4.6.0.0,samtools --logdir ~/job_outputs/gatk/gathervcfs/"$SWARM_NAME"_GatherHC --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid7" --job-name "$SWARM_NAME"_GatherHC")
 echo "Gather gVCFs Swarm ID: "$jobid8""
 }
 #
 ApplyBQSRresubmit(){
-jobid5=$(swarm -f bqsr_ApplyBQSR.swarm -g 8 -t 6 -b 40 --gres=lscratch:350 --time 6:00:00 --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/BaseRecalibrator/"$SWARM_NAME"_ApplyBQSR --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_ApplyBQSR")
+jobid5=$(swarm -f bqsr_ApplyBQSR.swarm -g 8 -t 6 -b 40 --gres=lscratch:350 --time 6:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/BaseRecalibrator/"$SWARM_NAME"_ApplyBQSR --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_ApplyBQSR")
 echo "ApplyBQSR Swarm ID: "$jobid5""
 #
-jobid6=$(swarm -f bqsr_gatherBQSRBams.swarm -g 4 -t 4 --gres=lscratch:75 --time 4:00:00 --partition=quick --module GATK/4.4.0.0,samtools --logdir ~/job_outputs/gatk/GatherBams/"$SWARM_NAME"_GatherBams --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid5" --job-name "$SWARM_NAME"_GatherBams")
+jobid6=$(swarm -f bqsr_gatherBQSRBams.swarm -g 4 -t 4 --gres=lscratch:75 --time 4:00:00 --partition=quick --module GATK/4.6.0.0,samtools --logdir ~/job_outputs/gatk/GatherBams/"$SWARM_NAME"_GatherBams --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid5" --job-name "$SWARM_NAME"_GatherBams")
 echo "Gather BQSR Bams Swarm ID: "$jobid6""
 #
-jobid7=$(swarm -f haplotypecaller.swarm -g 8 -t 6 -b 5 --gres=lscratch:120 --time 48:00:00 --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/HaplotypeCaller/"$SWARM_NAME"_HC --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid6" --job-name "$SWARM_NAME"_HC")
+jobid7=$(swarm -f haplotypecaller.swarm -g 8 -t 6 -b 5 --gres=lscratch:120 --time 48:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/HaplotypeCaller/"$SWARM_NAME"_HC --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid6" --job-name "$SWARM_NAME"_HC")
 echo "HaplotypeCaller Swarm ID: "$jobid7""
 #
-jobid8=$(swarm -f hc_gathergvcfs.swarm -g 3 -t 4 -b 2 --gres=lscratch:75 --time 60:00 --partition=quick --module GATK/4.4.0.0,samtools --logdir ~/job_outputs/gatk/gathervcfs/"$SWARM_NAME"_GatherHC --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid7" --job-name "$SWARM_NAME"_GatherHC")
+jobid8=$(swarm -f hc_gathergvcfs.swarm -g 3 -t 4 -b 2 --gres=lscratch:75 --time 60:00 --partition=quick --module GATK/4.6.0.0,samtools --logdir ~/job_outputs/gatk/gathervcfs/"$SWARM_NAME"_GatherHC --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid7" --job-name "$SWARM_NAME"_GatherHC")
 echo "Gather gVCFs Swarm ID: "$jobid8""
 }
 #
 BQSRbamsGatherresubmit(){
-jobid6=$(swarm -f bqsr_gatherBQSRBams.swarm -g 4 -t 4 --gres=lscratch:75 --time 4:00:00 --partition=quick --module GATK/4.4.0.0,samtools --logdir ~/job_outputs/gatk/GatherBams/"$SWARM_NAME"_GatherBams --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_GatherBams")
+jobid6=$(swarm -f bqsr_gatherBQSRBams.swarm -g 4 -t 4 --gres=lscratch:75 --time 4:00:00 --partition=quick --module GATK/4.6.0.0,samtools --logdir ~/job_outputs/gatk/GatherBams/"$SWARM_NAME"_GatherBams --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_GatherBams")
 echo "Gather BQSR Bams Swarm ID: "$jobid6""
 #
-jobid7=$(swarm -f haplotypecaller.swarm -g 8 -t 6 -b 5 --gres=lscratch:120 --time 48:00:00 --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/HaplotypeCaller/"$SWARM_NAME"_HC --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid6" --job-name "$SWARM_NAME"_HC")
+jobid7=$(swarm -f haplotypecaller.swarm -g 8 -t 6 -b 5 --gres=lscratch:120 --time 48:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/HaplotypeCaller/"$SWARM_NAME"_HC --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid6" --job-name "$SWARM_NAME"_HC")
 echo "HaplotypeCaller Swarm ID: "$jobid7""
 #
-jobid8=$(swarm -f hc_gathergvcfs.swarm -g 3 -t 4 -b 2 --gres=lscratch:75 --time 60:00 --partition=quick --module GATK/4.4.0.0,samtools --logdir ~/job_outputs/gatk/gathervcfs/"$SWARM_NAME"_GatherHC --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid7" --job-name "$SWARM_NAME"_GatherHC")
+jobid8=$(swarm -f hc_gathergvcfs.swarm -g 3 -t 4 -b 2 --gres=lscratch:75 --time 60:00 --partition=quick --module GATK/4.6.0.0,samtools --logdir ~/job_outputs/gatk/gathervcfs/"$SWARM_NAME"_GatherHC --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid7" --job-name "$SWARM_NAME"_GatherHC")
 echo "Gather gVCFs Swarm ID: "$jobid8""
 }
 #
 HCresubmit(){
-jobid7=$(swarm -f haplotypecaller.swarm -g 8 -t 6 -b 5 --gres=lscratch:120 --time 48:00:00 --module GATK/4.4.0.0 --logdir ~/job_outputs/gatk/HaplotypeCaller/"$SWARM_NAME"_HC --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_HC")
+jobid7=$(swarm -f haplotypecaller.swarm -g 8 -t 6 -b 5 --gres=lscratch:120 --time 48:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/HaplotypeCaller/"$SWARM_NAME"_HC --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_HC")
 echo "HaplotypeCaller Swarm ID: "$jobid7""
 #
-jobid8=$(swarm -f hc_gathergvcfs.swarm -g 3 -t 4 -b 2 --gres=lscratch:75 --time 60:00 --partition=quick --module GATK/4.4.0.0,samtools --logdir ~/job_outputs/gatk/gathervcfs/"$SWARM_NAME"_GatherHC --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid7" --job-name "$SWARM_NAME"_GatherHC")
+jobid8=$(swarm -f hc_gathergvcfs.swarm -g 3 -t 4 -b 2 --gres=lscratch:75 --time 60:00 --partition=quick --module GATK/4.6.0.0,samtools --logdir ~/job_outputs/gatk/gathervcfs/"$SWARM_NAME"_GatherHC --sbatch "--mail-type=ALL,TIME_LIMIT_90 --dependency=afterok:"$jobid7" --job-name "$SWARM_NAME"_GatherHC")
 echo "Gather gVCFs Swarm ID: "$jobid8""
 }
 #
 HCgatherresubmit(){
-jobid1=$(swarm -f hc_gathergvcfs.swarm -g 3 -t 4 -b 2 --gres=lscratch:75 --time 60:00 --partition=quick --module GATK/4.4.0.0,samtools --logdir ~/job_outputs/gatk/gathervcfs/"$SWARM_NAME"_GatherHC --sbatch "--mail-type=ALL,TIME_LIMIT_90 --job-name "$SWARM_NAME"_GatherHC")
+jobid1=$(swarm -f hc_gathergvcfs.swarm -g 3 -t 4 -b 2 --gres=lscratch:75 --time 60:00 --partition=quick --module GATK/4.6.0.0,samtools --logdir ~/job_outputs/gatk/gathervcfs/"$SWARM_NAME"_GatherHC --sbatch "--mail-type=ALL,TIME_LIMIT_90 --job-name "$SWARM_NAME"_GatherHC")
 echo "Gather gVCFs Swarm ID: "$jobid1""
 }
 #
