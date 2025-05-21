@@ -164,7 +164,7 @@ knownsites(){
 	for dir in ${basedir[@]};
         do
                 cd "$dir";
-                ( for file in "$dir"/txt_files/*.knownsites.vcf.gz
+                ( for file in "$dir"/txt_files/*.knownsites.vcf.gz.tbi
                 do
                         if [ -e "$file" ]
                         then
@@ -184,7 +184,7 @@ flagstat(){
 		do
 			if [ -e "$file" ]
 			then
-				exit 0
+				echo "Skipping "$dir""; exit 0
 			else
 				echo "Building flagstat swarm for "$dir""; bash "$scriptdir"/postprocess-flagstat.sh
 			fi
@@ -200,7 +200,7 @@ insertmetrics(){
 		do
 			if [ -e "$file" ]
 			then
-				exit 0
+				echo "Skipping "$dir""; exit 0
 			else
 				echo "Building insert metrics swarm for "$dir""; bash "$scriptdir"/postprocess-insertmetrics.sh
 			fi
@@ -216,7 +216,7 @@ alignmentmetrics(){
 		do
 			if [ -e "$file" ]
 			then
-				exit 0
+				echo "Skipping "$dir""; exit 0
 			else
 				echo "Building alignment metrics swarm for "$dir""; bash "$scriptdir"/postprocess-alignmentmetrics.sh
 			fi
@@ -277,36 +277,36 @@ echo ""
 ## Now all swarmfiles are generated and below are all of the possible functions of how to submit to the cluster, fully or partially.
 #
 fullsubmit(){
-jobid1=$(swarm -f postprocess-BQSR2CRAM.swarm -g 8 -t 6 --gres=lscratch:60 --time 24:00:00 --module GATK/4.4.0.0,samtools --logdir ~/job_outputs/gatk/PrintReads/"$SWARM_NAME"_PR --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_PR")
+jobid1=$(swarm -f postprocess-BQSR2CRAM.swarm -g 8 -t 6 --gres=lscratch:175 --time 24:00:00 --module GATK/4.6.0.0,samtools --logdir ~/job_outputs/gatk/PrintReads/"$SWARM_NAME"_PR --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_PR")
 echo "CRAM conversion Swarm ID: " $jobid1
 #
 jobid2=$(swarm -f postprocess-gVCFRecompress.swarm -g 8 -t 8 --gres=lscratch:20 --time 24:00:00 --module samtools,bcftools --logdir ~/job_outputs/Recompress/"$SWARM_NAME" --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_Recompress")
 echo "gVCF Recompress Swarm ID: " $jobid2
 #
-jobid3=$(swarm -f postprocess-knownsites.swarm -g 8 -t 8 --gres=lscratch:15 --time 24:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/Knownsites/"$SWARM_NAME"_KS --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid2" --job-name "$SWARM_NAME"_knownsites")
+jobid3=$(swarm -f postprocess-knownsites.swarm -g 8 -t 8 --gres=lscratch:15 --time 24:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/Knownsites/"$SWARM_NAME"_KS --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid2" --job-name "$SWARM_NAME"_knownsites")
 echo "Knownsites Swarm ID: " $jobid3
 #
-jobid4=$(swarm -f postprocess-flagstat.swarm --time 2:00:00 --module samtools --logdir ~/job_outputs/samtools/flagstat/"$SWARM_NAME"_flagstat --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_flagstat --dependency=afterok:"$jobid1"")
+jobid4=$(swarm -f postprocess-flagstat.swarm -b 10 --time 1:00:00 --module samtools --logdir ~/job_outputs/samtools/flagstat/"$SWARM_NAME"_flagstat --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_flagstat --dependency=afterok:"$jobid1"")
 echo "Flagstat Swarm ID: " $jobid4
 #
-jobid5=$(swarm -f postprocess-insertmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.5.0.0,R/4.4 --logdir ~/job_outputs/gatk/InsertMetrics/"$SWARM_NAME"_InsertMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_InsertMet --dependency=afterok:"$jobid1"")
+jobid5=$(swarm -f postprocess-insertmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.6.0.0,R/4.4 --logdir ~/job_outputs/gatk/InsertMetrics/"$SWARM_NAME"_InsertMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_InsertMet --dependency=afterok:"$jobid1"")
 echo "Insert Size Metrics Swarm ID: " $jobid5
 #
-jobid6=$(swarm -f postprocess-alignmentmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/AlignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet --dependency=afterok:"$jobid1"")
+jobid6=$(swarm -f postprocess-alignmentmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/AlignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet --dependency=afterok:"$jobid1"")
 echo "Alignment Size Metrics Swarm ID: " $jobid6
 }
 #
 cramresub(){
-jobid1=$(swarm -f postprocess-BQSR2CRAM.swarm -g 8 -t 6 --gres=lscratch:60 --time 24:00:00 --module GATK/4.4.0.0,samtools --logdir ~/job_outputs/gatk/PrintReads/"$SWARM_NAME"_PR --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_PR")
+jobid1=$(swarm -f postprocess-BQSR2CRAM.swarm -g 8 -t 6 --gres=lscratch:175 --time 24:00:00 --module GATK/4.6.0.0,samtools --logdir ~/job_outputs/gatk/PrintReads/"$SWARM_NAME"_PR --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_PR")
 echo "CRAM conversion Swarm ID: " $jobid1
 #
-jobid4=$(swarm -f postprocess-flagstat.swarm --time 2:00:00 --module samtools --logdir ~/job_outputs/samtools/flagstat/"$SWARM_NAME"_flagstat --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_flagstat --dependency=afterok:"$jobid1"")
+jobid4=$(swarm -f postprocess-flagstat.swarm -b 10 --time 1:00:00 --module samtools --logdir ~/job_outputs/samtools/flagstat/"$SWARM_NAME"_flagstat --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_flagstat --dependency=afterok:"$jobid1"")
 echo "Flagstat Swarm ID: " $jobid4
 #
-jobid5=$(swarm -f postprocess-insertmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.5.0.0,R/4.4 --logdir ~/job_outputs/gatk/InsertMetrics/"$SWARM_NAME"_InsertMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_InsertMet --dependency=afterok:"$jobid1"")
+jobid5=$(swarm -f postprocess-insertmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.6.0.0,R/4.4 --logdir ~/job_outputs/gatk/InsertMetrics/"$SWARM_NAME"_InsertMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_InsertMet --dependency=afterok:"$jobid1"")
 echo "Insert Size Metrics Swarm ID: " $jobid5
 #
-jobid6=$(swarm -f postprocess-alignmentmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/AlignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet --dependency=afterok:"$jobid1"")
+jobid6=$(swarm -f postprocess-alignmentmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/AlignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet --dependency=afterok:"$jobid1"")
 echo "Alignment Size Metrics Swarm ID: " $jobid6
 }
 #
@@ -316,38 +316,43 @@ echo "gVCF Recompress Swarm ID: " $jobid2
 }
 #
 knownsitesonlyresub(){
-jobid3=$(swarm -f postprocess-knownsites.swarm -g 8 -t 8 --gres=lscratch:15 --time 24:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/Knownsites/"$SWARM_NAME"_KS --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_knownsites")
+jobid3=$(swarm -f postprocess-knownsites.swarm -g 8 -t 8 --gres=lscratch:15 --time 24:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/Knownsites/"$SWARM_NAME"_KS --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_knownsites")
 echo "Knownsites Swarm ID: " $jobid3
 }
 gvcfandKSresub(){
 jobid2=$(swarm -f postprocess-gVCFRecompress.swarm -g 8 -t 8 --gres=lscratch:20 --time 24:00:00 --module samtools,bcftools --logdir ~/job_outputs/Recompress/"$SWARM_NAME" --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_Recompress")
 echo "gVCF Recompress Swarm ID: " $jobid2
 #
-jobid3=$(swarm -f postprocess-knownsites.swarm -g 8 -t 8 --gres=lscratch:15 --time 24:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/Knownsites/"$SWARM_NAME"_KS --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid2" --job-name "$SWARM_NAME"_knownsites")
+jobid3=$(swarm -f postprocess-knownsites.swarm -g 8 -t 8 --gres=lscratch:15 --time 24:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/Knownsites/"$SWARM_NAME"_KS --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid2" --job-name "$SWARM_NAME"_knownsites")
 echo "Knownsites Swarm ID: " $jobid3
 }
 #
 fullmetricsresub(){
-jobid4=$(swarm -f postprocess-flagstat.swarm --time 2:00:00 --module samtools --logdir ~/job_outputs/samtools/flagstat/"$SWARM_NAME"_flagstat --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_flagstat")
+jobid4=$(swarm -f postprocess-flagstat.swarm -b 10 --time 1:00:00 --module samtools --logdir ~/job_outputs/samtools/flagstat/"$SWARM_NAME"_flagstat --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_flagstat")
 echo "Flagstat Swarm ID: " $jobid4
 #
-jobid5=$(swarm -f postprocess-insertmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.5.0.0,R/4.4 --logdir ~/job_outputs/gatk/InsertMetrics/"$SWARM_NAME"_InsertMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_InsertMet")
+jobid5=$(swarm -f postprocess-insertmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.6.0.0,R/4.4 --logdir ~/job_outputs/gatk/InsertMetrics/"$SWARM_NAME"_InsertMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_InsertMet")
 echo "Insert Size Metrics Swarm ID: " $jobid5
 #
-jobid6=$(swarm -f postprocess-alignmentmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/AlignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet")
+jobid6=$(swarm -f postprocess-alignmentmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/AlignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet")
 echo "Alignment Size Metrics Swarm ID: " $jobid6
 }
 #
 metricsresub(){
-jobid5=$(swarm -f postprocess-insertmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.5.0.0,R/4.4 --logdir ~/job_outputs/gatk/InsertMetrics/"$SWARM_NAME"_InsertMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_InsertMet")
+jobid5=$(swarm -f postprocess-insertmetrics.swarm -g 8 -t 4 --time 12:00:00 --module GATK/4.6.0.0,R/4.4 --logdir ~/job_outputs/gatk/InsertMetrics/"$SWARM_NAME"_InsertMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_InsertMet")
 echo "Insert Size Metrics Swarm ID: " $jobid5
 #
-jobid6=$(swarm -f postprocess-alignmentmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/AlignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet")
+jobid6=$(swarm -f postprocess-alignmentmetrics.swarm -g 8 -t 4 --time 12:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/AlignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet")
 echo "Alignment Size Metrics Swarm ID: " $jobid6
 }
 #
+insertresub(){
+jobid5=$(swarm -f postprocess-insertmetrics.swarm -g 8 -t 4 --time 12:00:00 --module GATK/4.6.0.0,R/4.4 --logdir ~/job_outputs/gatk/InsertMetrics/"$SWARM_NAME"_InsertMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_InsertMet")
+echo "Insert Size Metrics Swarm ID: " $jobid5
+}
+#
 alignmentresub(){
-jobid6=$(swarm -f postprocess-alignmentmetrics.swarm -g 8 -t 4 --time 5:00:00 --module GATK/4.5.0.0 --logdir ~/job_outputs/gatk/AlignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet")
+jobid6=$(swarm -f postprocess-alignmentmetrics.swarm -g 8 -t 4 --time 24:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/AlignmentMetrics/"$SWARM_NAME"_AlignMet --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_AlignMet")
 echo "Alignment Size Metrics Swarm ID: " $jobid6
 }
 #
@@ -412,7 +417,7 @@ then
                 head -n 1 postprocess-gVCFRecompress.swarm
                 echo ""
 	fi
-elif [ -s postprocess-flagstat.swarm ]
+elif [ -s postprocess-flagstat.swarm ] && [ -s postprocess-insertmetrics.swarm ] && [ -s postprocess-alignmentmetrics.swarm ]
 then
 	echo "Flagstat swarm:"
 	head -n 1 postprocess-flagstat.swarm
@@ -423,19 +428,26 @@ then
 	echo "Alignment Metrics swarm:"
 	head -n 1 postprocess-alignmentmetrics.swarm
 	echo ""
-elif [ -s postprocess-insertmetrics.swarm ]
+elif [ ! -s postprocess-flagstat.swarm ] && { [ -s postprocess-insertmetrics.swarm ] || [ -s postprocess-alignmentmetrics.swarm ]; }
 then
-	echo "Insert Metrics swarm:"
-	head -n 1 postprocess-insertmetrics.swarm
-	echo ""
-	echo "Alignment Metrics swarm:"
-	head -n 1 postprocess-alignmentmetrics.swarm
-	echo""
-elif [ -s postprocess-alignmentmetrics.swarm ]
-then
-	echo "Alignment Metrics swarm:"
-	head -n 1 postprocess-alignmentmetrics.swarm
-	echo ""
+	if [ -s postprocess-insertmetrics.swarm ] && [ -s postprocess-alignmentmetrics.swarm ]
+	then
+		echo "Insert Metrics swarm:"
+		head -n 1 postprocess-insertmetrics.swarm
+		echo ""
+		echo "Alignment Metrics swarm:"
+		head -n 1 postprocess-alignmentmetrics.swarm
+		echo ""
+	elif [ ! -s postprocess-alignmentmetrics.swarm ]
+	then
+		echo "Insert Metrics swarm:"
+		head -n 1 postprocess-insertmetrics.swarm
+		echo ""
+	else
+		echo "Alignment Metrics swarm:"
+		head -n 1 postprocess-alignmentmetrics.swarm
+		echo""
+	fi
 else
 	echo "Error! No swarmfiles to submit?"; exit 1
 fi
@@ -466,19 +478,24 @@ then
 		gvcfandKSresub
 	elif [ ! -s postprocess-gVCFRecompress.swarm ] && [ -s postprocess-knownsites.swarm ]
 	then
-		knownsitesonly
+		knownsitesonlyresub
 	else
 		recompressonlyresub
 	fi
-elif [ -s postprocess-flagstat.swarm ]
+elif [ -s postprocess-flagstat.swarm ] && [ -s postprocess-insertmetrics.swarm ] && [ -s postprocess-alignmentmetrics.swarm ]
 then
 	fullmetricsresub
-elif [ -s postprocess-insertmetrics.swarm ]
+elif [ ! -s postprocess-flagstat.swarm ] && { [ -s postprocess-insertmetrics.swarm ] || [ -s postprocess-alignmentmetrics.swarm ]; }
 then
-	metricsresub
-elif [ -s postprocess-alignmentmetrics.swarm ]
-then
-	alignmentresub
+	if [ -s postprocess-insertmetrics.swarm ] && [ -s postprocess-alignmentmetrics.swarm ]
+	then
+		metricsresub
+	elif [ ! -s postprocess-alignmentmetrics.swarm ]
+	then
+		insertresub
+	else
+		alignmentresub
+	fi
 else
 	echo "Error! No swarmfiles submitted!"; exit 1
 fi
