@@ -1,0 +1,1 @@
+cd /data/Ostrander/scripts/Dev_Branch/v1.01/swarmfiles; bcftools concat -a -D --threads $SLURM_CPUS_PER_TASK -f BCFConcat_XNonPARsamplemap.txt -O z -o /data/harrisac2/test/VCF_Pipeline_test/RAW_VQSR/NewName.chrX.NONPAR.vcf.gz && gatk IndexFeatureFile -I /data/harrisac2/test/VCF_Pipeline_test/RAW_VQSR/NewName.chrX.NONPAR.vcf.gz --tmp-dir /lscratch/$SLURM_JOB_ID
