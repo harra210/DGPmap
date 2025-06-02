@@ -100,7 +100,7 @@ then
 elif [[ -z $FILE_IN ]]
 then
         while true; do
-                read -p "WARNING: No mapfile was provided. Do you wish to continue? (Yes or No) " promptA
+                read -p "WARNING: No mapfile was provided. Do you wish to continue? (Yes or No) " promptA # The reason for this prompt is a sanity check for the user as performing a full joint call is extremely resource-intensive and data heavy. The purpose for this script is so that users can input their own mapfile and create custom joint calls without the use of trimming.
                 case $promptA in
                         [YyEeSs]* ) break;;
                         [NnOo]* ) echo "Try '`cmd` -h' for more information."; exit 1;;
@@ -194,6 +194,8 @@ mkdir -p Final_VQSR
 cd Final_VQSR
 FILTER_DIR=$(pwd)
 #
+## Important BASH note for functions, within functions do not use the declare tag to formalize array variables as seen in previous scripts. Ex. declare -a sample ; what this does within the function is blank out the contents of the variable and will cause issues when referencing the variable in other areas of the script.
+#
 ## Now we create an if/else statement to generate a samplemap file if the flag is null, and if one is supplied the script will pause to prompt the user if the file supplied is the correct file
 #
 mapmake(){
@@ -210,8 +212,8 @@ mapmake(){
         do
                 echo ""$GVCF_DIR""$sample".g.vcf.gz" >> gvcf_final.txt;
         done
-        paste "$tmpdir"/GenomicsDB_samplenames.txt "$tmpdir"/gvcf_final.txt > "$homedir"/GenomicsDB_samplemap.txt
-	tail "$homedir"/GenomicsDB_samplemap.txt
+        paste "$tmpdir"/GenomicsDB_samplenames.txt "$tmpdir"/gvcf_final.txt > "$swarmdir"/GenomicsDB_samplemap.txt
+	tail "$swarmdir"/GenomicsDB_samplemap.txt
 	read -p "This is the last 10 lines of that file. Is this the correct file and is the syntax correct? (Yes or No) " promptA
                 while true; do
                         case "$promptA" in
@@ -224,7 +226,7 @@ mapmake(){
 }
 #
 samplemap(){
-	if [[ -n "$GVCF_DIR" ]]
+	if [[ ! -z "$GVCF_DIR" ]]
 	then
         	mapmake
 	else
@@ -294,6 +296,8 @@ bcfAutoXPAR_intervals(){
         done < /data/Ostrander/Resources/CanFam4_GSD/Intervals/chr/chrX/chrX.intervals
 }
 #
+## Issue to figure out for this function is why when rerunning the echo repeats until complete rather than just one echo'ed line.
+#
 bcfAutoXPAR_rerun(){
         cd "$bcfintervalmap"
 	#
@@ -320,8 +324,6 @@ bcfXNonPAR_intervals(){
 	#
         IFS=,$'\n' read -d '' -r -a NonPARvcf < "$bcfintervalmap"/XNonPARsamples.txt
         sortedNonPARvcf=( $(printf "%s\n" ${NonPARvcf[*]} | sort -V ) )
-        declare -a sortedNonPARvcf
-        unset IFS
         #
         cd $swarmdir
         > DGPjointcall-XNonPARsamplemap.txt
@@ -343,7 +345,7 @@ bcfXNonPAR_rerun(){
         done
 }
 #
-## No confirmatory checks need to be done to concat everything to chromosome level as this check is performed at the GenomicsDBImport steps. The AutoXPAR will have 2 commands written to the swarm file, chr 1-38 and then chrX.
+## Now, confirmatory checks need to be done to concat everything to chromosome level as this check is performed at the GenomicsDBImport steps. The AutoXPAR will have 2 commands written to the swarm file, chr 1-38 and then chrX.
 #
 bcfconcat_AutoXPAR(){
 	cd "$swarmdir"
@@ -361,7 +363,7 @@ bcfconcat_AutoXPAR(){
 bcfconcat_XNonPAR(){
 	cd "$swarmdir"
 	#
-        echo "cd $swarmdir; bcftools concat -a -D --threads \$SLURM_CPUS_PER_TASK -f BCFConcat_XNonPARsamplemap.txt -O z -o "$VQSR_DIR"/"$NAME".chrX.NONPAR.vcf.gz && gatk IndexFeatureFile -I "$VQSR_DIR"/"$NAME".chrX.NONPAR.vcf.gz --tmp-dir /lscratch/\$SLURM_JOB_ID" >> DGPjointcall-concatXNonPAR.swarm
+        echo "cd $swarmdir; bcftools concat -a -D --threads \$SLURM_CPUS_PER_TASK -f DGPjointcall-XNonPARsamplemap.txt -O z -o "$VQSR_DIR"/"$NAME".chrX.NONPAR.vcf.gz && gatk IndexFeatureFile -I "$VQSR_DIR"/"$NAME".chrX.NONPAR.vcf.gz --tmp-dir /lscratch/\$SLURM_JOB_ID" >> DGPjointcall-concatXNonPAR.swarm
 }
 #
 GATK_gathervcfs(){
@@ -377,17 +379,17 @@ GATK_gathervcfs(){
         echo ""$NAME".chrX.AutoXPAR.vcf.gz" >> chr_AutoXPARsamplemap.txt
         #
         cd "$swarmdir"
-	#echo ""$gatkchrmap"/chr_AutoXPARsamplemap.txt"
-	#sleep 30
+	#echo ""$gatkchrmap"/chr_AutoXPARsamplemap.txt" # This is a debug line to verify the contents of the text file.
+	#sleep 30 # Debug line to pause the script; Ctrl+C to exit the script or wait 30 seconds to continue.
         #
         IFS=,$'\n' read -d '' -r -a vcf < "$gatkchrmap"/chr_AutoXPARsamplemap.txt
-        echo "${vcf[*]}"
-	#sleep 30
+        #echo "${vcf[*]}" # This is a debug line to verify $vcf is not null and its contents is there.
+	#sleep 30 # Debug line to pause the script; Ctrl+C to exit the script or wait 30 seconds to continue.
 	export vcf
 	sortedvcf=( $(printf "%s\n" ${vcf[*]} | sort -V ) )
         export sortedvcf
-	echo "${sortedvcf[*]}"
-#	sleep 30
+	#echo "${sortedvcf[*]}" # This is a debug line to verify $sortedvcf is not null and its contents is there.
+#	sleep 30 # Debug line to pause the script; Ctrl+C to exit the script or wait 30 seconds to continue.
 	#
         PREFIX="-I "
 	export PREFIX
@@ -591,14 +593,17 @@ GATK_VariantRecalibrator_check
 ##########
 ## DEBUG AREA ##
 ##########
-echo "wcRAW $wcRAW"
-echo "wcXNON $wcXNON"
-echo "bcAuto $bcAuto"
-echo "bcXNPAR $bcXNPAR"
-echo "gatkGV $gatkGV"
-echo "vcfSV $vcfSV"
-echo "vcfVF $vcfVF"
-echo "vcfVR $vcfVR"
+#
+# Here we just echo the number the files considered as each variable. These variable numbers are numbers to correleate with the conditional branching.
+#
+#echo "wcRAW $wcRAW"
+#echo "wcXNON $wcXNON"
+#echo "bcAuto $bcAuto"
+#echo "bcXNPAR $bcXNPAR"
+#echo "gatkGV $gatkGV"
+#echo "vcfSV $vcfSV"
+#echo "vcfVF $vcfVF"
+#echo "vcfVR $vcfVR"
 
 #sleep 30 ## AS OF 5/21/25 THIS PART IS VALIDATED.
 #########
@@ -608,6 +613,7 @@ echo "vcfVR $vcfVR"
 ## Here we create all of the functions with all of the possibilities, later we'll create the conditional branching
 #
 fullsubmit(){
+	samplemap
 	AutoXPAR_gDB
 	XNonPAR_gDB
 	bcfAutoXPAR_intervals
@@ -621,6 +627,7 @@ fullsubmit(){
 }
 #
 full_rerun(){
+	samplemap
 	AutoXPARtruncatedretry
 	AutoXPARtruncatedGdbI
 	XNonPARtruncatedretry
@@ -636,6 +643,7 @@ full_rerun(){
 }
 #
 AutoXPARGdbI_rerun(){
+	samplemap
 	AutoXPARtruncatedretry
 	AutoXPARtruncatedGdbI
 	bcfAutoXPAR_rerun
@@ -649,6 +657,7 @@ AutoXPARGdbI_rerun(){
 }
 #
 XNonPARGdbI_rerun(){
+	samplemap
 	XNonPARtruncatedretry
 	XNonPARtruncatedGdbI
 	bcfAutoXPAR_rerun
@@ -710,19 +719,19 @@ GATK_VariantRecalibrator_rerun(){
 if [ $wcRAW == 0 ] && [ $wcXNON == 0 ] # No AutoXPAR or X NonPAR vcf shards = full pipeline submit
 then
 	fullsubmit
-elif ! [ $wcRAW == 0 ] && ! [ $wcRAW == 2255 ] && ! [ $wcXNON == 0 ] && ! [ $wcXNON == 119 ] #If AutoXPAR AND XNonPAR shards are missing, will perform a full pipeline rerun.
+elif [ $wcRAW -ge 0 ] && ! [ $wcRAW == 2255 ] && [ $wcXNON -ge 0 ] && ! [ $wcXNON == 119 ] #If AutoXPAR AND XNonPAR shards are missing, will perform a full pipeline rerun.
 then
 	full_rerun
-elif ! [ $wcRAW == 0 ] && ! [ $wcRAW == 2255 ]  && [ $wcXNON == 119 ] #If missing AutoXPAR shards, will only run AutoXPAR GdbI. XPAR will not run.
+elif  [ $wcRAW -ge 0 ] && ! [ $wcRAW == 2255 ]  && [ $wcXNON == 119 ] #If missing AutoXPAR shards, will only run AutoXPAR GdbI. XPAR will not run.
 then
 	AutoXPARGdbI_rerun
-elif [ $wcRAW == 2255 ] && ! [ $wcXNON == 0 ] && ! [ $wcXNON == 119 ] #If AutoXPAR shards are complete but missing XNonPAR shards detected, will rerun XNonPAR.
+elif [ $wcRAW == 2255 ] && [ $wcXNON -ge 0 ] && ! [ $wcXNON == 119 ] #If AutoXPAR shards are complete but missing XNonPAR shards detected, will rerun XNonPAR.
 then
 	XNonPARGdbI_rerun
 elif [ $wcRAW == 2255 ] && [ $wcXNON == 119 ] && ! [ $bcAuto == 39 ] #GdbI completed successfully but missing 39 concatenated vcf files then BCFtools concat will rerun
 then
 	bcfconcatAutoXPAR_rerun
-elif [ $wcRAW == 2255 ] && [ $wcXNON == 119 ] && [ $bcAuto == 39 ] && ! [ $bcXNPAR == 1 ] #GdbI completed successfully and AutoXPAR concat completed successfully but XNonPAR failed and needs redoing.
+elif [ $wcRAW == 2255 ] && [ $wcXNON == 119 ] && [ $bcAuto == 39 ] && [ $bcXNPAR == 0 ] && [ $gatkGV == 1 ] #GdbI completed successfully and AutoXPAR concat completed successfully but XNonPAR failed and needs redoing. Note, can add an additional branch since gathervcfs is separate to xnonpar.
 then
 	bcfconcatXNonPAR_rerun
 elif [ $wcRAW == 2255 ] && [ $wcXNON == 119 ] && [ $bcAuto == 39 ] && [ $bcXNPAR == 1 ] && ! [ $gatkGV == 1 ] #If AutoXPAR GATK Gathervcfs failed and needs to be rerun from here.
@@ -820,6 +829,20 @@ bcfconcat_rerun_swarm(){
         echo "Gathervcfs Swarm ID: "$jobid3""
         #
         local jobid4=$(swarm -f VQSR_SelectVariants.swarm -g 8 -t 10 --time 24:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/SelectVariants/"$SWARM_NAME" --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_SelectVariants --dependency=afterok:"$jobid2","$jobid3"")
+        echo "SelectVariants Swarm ID: "$jobid4""
+        #
+        local jobid5=$(swarm -f VQSR_VariantFiltration.swarm -g 8 -t 10 --time 12:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/VariantFiltration/"$SWARM_NAME" --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_VariantFiltration --dependency=afterok:"$jobid4"")
+        echo "VariantFiltration Swarm ID: "$jobid5""
+        #
+        local jobid6=$(swarm -f VQSR_VariantRecalibrator.swarm -g 72 -t 12 --time 3-0 --gres=lscratch:250 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/VariantRecalibrator/"$SWARM_NAME" --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_VariantRecal --dependency=afterok:"$jobid5"")
+        echo "VariantRecalibrator Swarm ID: "$jobid6""
+}
+#
+bcfconcatXNonPAR_rerun_swarm(){
+	local jobid2=$(swarm -f DGPjointcall-concatXNonPAR.swarm -g 32 -t 8 --time 24:00:00 --gres=lscratch:150 --module bcftools/1.16,GATK/4.6.0.0 --logdir ~/job_outputs/BCFtools/Concat/"$SWARM_NAME"_XNonPAR --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_XNonPAR_Concat")
+        echo "BCFTools XNonPar Concat Swarm ID: "$jobid2""
+        #
+        local jobid4=$(swarm -f VQSR_SelectVariants.swarm -g 8 -t 10 --time 24:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/SelectVariants/"$SWARM_NAME" --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_SelectVariants --dependency=afterok:"$jobid2"")
         echo "SelectVariants Swarm ID: "$jobid4""
         #
         local jobid5=$(swarm -f VQSR_VariantFiltration.swarm -g 8 -t 10 --time 12:00:00 --module GATK/4.6.0.0 --logdir ~/job_outputs/gatk/VariantFiltration/"$SWARM_NAME" --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_VariantFiltration --dependency=afterok:"$jobid4"")
@@ -957,24 +980,60 @@ then
 	fi
 elif [ -s GATK_Gathervcfs.swarm ] && { [ -s DGPjointcall-concatAutoXPAR.swarm ] || [ -s DGPjointcall-concatXNonPAR.swarm ]; }
 then
-	echo "BCFtools AutoXPAR concat swarm:"
-	head -n 1 DGPjointcall-concatAutoXPAR.swarm
-	echo ""
-        echo "BCFtools XNonPAR concat swarm:"
-	head -n 1 DGPjointcall-concatXNonPAR.swarm
-        echo ""
-        echo "GATK Gathervcfs swarm:"
-        head -n 1 GATK_Gathervcfs.swarm
-        echo ""
-	echo "GATK SelectVariants swarm:"
-	head -n 1 VQSR_SelectVariants.swarm
-	echo ""
-	echo "GATK VariantFiltration.swarm"
-        head -n 1 VQSR_VariantFiltration.swarm
-        echo ""
-        echo "GATK VariantRecalibrator swarm"
-        head -n 1 VQSR_VariantRecalibrator.swarm
-        echo ""
+	if [ -s DGPjointcall-concatAutoXPAR.swarm ] && [ -s DGPjointcall-concatXNonPAR.swarm ]
+	then
+		echo "BCFtools AutoXPAR concat swarm:"
+		head -n 1 DGPjointcall-concatAutoXPAR.swarm
+		echo ""
+        	echo "BCFtools XNonPAR concat swarm:"
+		head -n 1 DGPjointcall-concatXNonPAR.swarm
+        	echo ""
+        	echo "GATK Gathervcfs swarm:"
+        	head -n 1 GATK_Gathervcfs.swarm
+        	echo ""
+		echo "GATK SelectVariants swarm:"
+		head -n 1 VQSR_SelectVariants.swarm
+		echo ""
+		echo "GATK VariantFiltration.swarm"
+        	head -n 1 VQSR_VariantFiltration.swarm
+        	echo ""
+        	echo "GATK VariantRecalibrator swarm"
+        	head -n 1 VQSR_VariantRecalibrator.swarm
+        	echo ""
+	elif [ -s DGPjointcall-concatAutoXPAR.swarm ] && [ ! -s DGPjointcall-concatXNonPAR.swarm ]
+	then
+		echo "BCFtools AutoXPAR concat swarm:"
+                head -n 1 DGPjointcall-concatAutoXPAR.swarm
+                echo ""
+                echo "GATK Gathervcfs swarm:"
+                head -n 1 GATK_Gathervcfs.swarm
+                echo ""
+                echo "GATK SelectVariants swarm:"
+                head -n 1 VQSR_SelectVariants.swarm
+                echo ""
+                echo "GATK VariantFiltration.swarm"
+                head -n 1 VQSR_VariantFiltration.swarm
+                echo ""
+                echo "GATK VariantRecalibrator swarm"
+                head -n 1 VQSR_VariantRecalibrator.swarm
+                echo ""
+	else
+                echo "BCFtools XNonPAR concat swarm:"
+                head -n 1 DGPjointcall-concatXNonPAR.swarm
+                echo ""
+                echo "GATK Gathervcfs swarm:"
+                head -n 1 GATK_Gathervcfs.swarm
+                echo ""
+                echo "GATK SelectVariants swarm:"
+                head -n 1 VQSR_SelectVariants.swarm
+                echo ""
+                echo "GATK VariantFiltration.swarm"
+                head -n 1 VQSR_VariantFiltration.swarm
+                echo ""
+                echo "GATK VariantRecalibrator swarm"
+                head -n 1 VQSR_VariantRecalibrator.swarm
+                echo ""
+	fi
 elif [ ! -s GATK_Gathervcfs.swarm ] && [ -s VQSR_SelectVariants.swarm ] && [ -s VQSR_VariantFiltration.swarm ] && [ -s VQSR_VariantRecalibrator.swarm ]
 then
 	echo "GATK SelectVariants swarm:"
@@ -1025,7 +1084,15 @@ then
 	fi
 elif [ -s GATK_Gathervcfs.swarm ] && { [ -s DGPjointcall-concatAutoXPAR.swarm ] || [ -s DGPjointcall-concatXNonPAR.swarm ]; }
 then
-	bcfconcat_rerun_swarm
+	if [ -s DGPjointcall-concatAutoXPAR.swarm ] && [ -s DGPjointcall-concatXNonPAR.swarm ]
+	then
+		bcfconcat_rerun_swarm
+	elif [ -s DGPjointcall-concatAutoXPAR.swarm ] && [ ! -s DGPjointcall-concatXNonPAR.swarm ]
+	then
+		bcfconcat_rerun_swarm
+	else
+		bcfconcatXNonPAR_rerun_swarm
+	fi
 elif [ ! -s DGPjointcall-concatAutoXPAR.swarm ] && [ ! -s DGPjointcall-concatXNonPAR.swarm ] && [ -s GATK_Gathervcfs.swarm ] && [ -s VQSR_SelectVariants.swarm ] && [ -s VQSR_VariantFiltration.swarm ] && [ -s VQSR_VariantRecalibrator.swarm ]
 then
 	GATK_gathervcfs_rerun_swarm
