@@ -133,6 +133,11 @@ export tmpdir
 #
 cd $homedir
 #
+mkdir -p swarmfiles
+cd swarmfiles
+swarmdir=$(pwd)
+export swarmdir
+#
 # Here, we blank all of the swarmfiles to be used from alignment to completion
 > bwa_to_picard.swarm
 > mergeDedup.swarm
@@ -143,8 +148,9 @@ cd $homedir
 > haplotypecaller.swarm
 > hc_gathergvcfs.swarm
 #
+cd $homedir
 #
-cd scripts/
+cd subscripts/
 scriptdir=$(pwd)
 #
 cd $tmpdir

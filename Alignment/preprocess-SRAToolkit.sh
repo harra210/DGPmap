@@ -57,7 +57,7 @@ for pass in 1 2; do
                 esac
                 shift
         done
-	if [ $pass -eq 1 ]; then ARGS=`getopts $opts $ARGS`
+	if [ $pass -eq 1 ]; then ARGS=`getopt $opts $ARGS`
                 if [ $? != 0 ]; then usage; exit 2; fi; set -- $ARGS
         fi
 done
@@ -103,7 +103,7 @@ tmpdir=$(pwd)
 > SRA_rundirectories.tmp
 cd "$homedir"
 #
-#mkdir -p "$OUT_DIR"
+mkdir -p "$OUT_DIR"
 #
 ## From here we can perform an if/then statement based on the status of input flag; whether or not a user-supplied file is given to parse.
 #
@@ -132,7 +132,7 @@ if [ ! -z "$INPUT" ]; then # Test to see if variable INPUT is not null
 	#
 	for ((i = 0; i < ${#SAMNdir[@]}; i++))
 	do
-		echo "prefetch -X 75g -O "$OUT_DIR""${SAMNdir[$i]}" "${SRR[$i]}"" >> "$homedir"/SRAtoolkit-prefetch.swarm
+		echo "prefetch -c -X 75g -O "$OUT_DIR""${SAMNdir[$i]}" "${SRR[$i]}"" >> "$swarmdir"/SRAtoolkit-prefetch.swarm
 	done
 	#
 else
@@ -178,13 +178,13 @@ else
 	#
 	for name in "${man_input[@]}"
 	do
-		echo "prefetch -X 75g -O "$OUT_DIR""$name" "$name"" >> "$homedir"/SRAtoolkit-prefetch.swarm
+		echo "prefetch -c -X 75g -O "$OUT_DIR""$name" "$name"" >> "$swarmdir"/SRAtoolkit-prefetch.swarm
 	done
 	#
 fi
 #
 ## Now we prompt the user to verify that the prefetch commands are formatted correctly.
-more "$homedir"/SRAtoolkit-prefetch.swarm
+more "$swarmdir"/SRAtoolkit-prefetch.swarm
 echo ""
 prefetchverify(){
 	read -r -p "Is the previous swarmfile formatted correctly? [Y/N] " j
@@ -207,16 +207,16 @@ prefetchverify
 if [ ! -z "$INPUT" ]; then
 	for ((i = 0; i < ${#SAMNdir[@]}; i++))
 	do
-		echo "fastq-dump --split-files --gzip --dumpbase -O "$OUT_DIR""${SAMNdir[$i]}"/"${SRR[$i]}" "$OUT_DIR""${SAMNdir[$i]}"/"${SRR[$i]}"/"${SRR[$i]}".sra && mv "$OUT_DIR""${SAMNdir[$i]}"/"${SRR[$i]}"/"${SRR[$i]}"_1.fastq.gz "$OUT_DIR""${SAMNdir[$i]}"/ && mv "$OUT_DIR""${SAMNdir[$i]}"/"${SRR[$i]}"/"${SRR[$i]}"_2.fastq.gz "$OUT_DIR""${SAMNdir[$i]}"/" >> "$homedir"/SRAtoolkit-fastqdump.swarm
+		echo "fastq-dump --split-files --gzip --dumpbase -O "$OUT_DIR""${SAMNdir[$i]}"/"${SRR[$i]}" "$OUT_DIR""${SAMNdir[$i]}"/"${SRR[$i]}"/"${SRR[$i]}".sra && mv "$OUT_DIR""${SAMNdir[$i]}"/"${SRR[$i]}"/"${SRR[$i]}"_1.fastq.gz "$OUT_DIR""${SAMNdir[$i]}"/ && mv "$OUT_DIR""${SAMNdir[$i]}"/"${SRR[$i]}"/"${SRR[$i]}"_2.fastq.gz "$OUT_DIR""${SAMNdir[$i]}"/" >> "$swarmdir"/SRAtoolkit-fastqdump.swarm
 	done
 else
 	for name in "${man_input[@]}"
 	do
-		echo "fastq-dump --split-files --gzip --dumpbase -O "$OUT_DIR""$name"/"$name" "$OUT_DIR""$name"/"$name"/"$name".sra && mv "$OUT_DIR""$name"/"$name"/"$name"_1.fastq.gz "$OUT_DIR""$name"/ && mv "$OUT_DIR""$name"/"$name"/"$name"_2.fastq.gz "$OUT_DIR""$name"" >> "$homedir"/SRAtoolkit-fastqdump.swarm
+		echo "fastq-dump --split-files --gzip --dumpbase -O "$OUT_DIR""$name"/"$name" "$OUT_DIR""$name"/"$name"/"$name".sra && mv "$OUT_DIR""$name"/"$name"/"$name"_1.fastq.gz "$OUT_DIR""$name"/ && mv "$OUT_DIR""$name"/"$name"/"$name"_2.fastq.gz "$OUT_DIR""$name"" >> "$swarmdir"/SRAtoolkit-fastqdump.swarm
 	done
 fi
 #
-head -n 3 "$homedir"/SRAtoolkit-fastqdump.swarm
+head -n 3 "$swarmdir"/SRAtoolkit-fastqdump.swarm
 echo ""
 fqverify(){
 	read -r -p "Is the previous swarmfile formatted correctly? [Y/N] " k
@@ -233,12 +233,12 @@ fqverify(){
 	esac
 }
 fqverify
-cd $homedir
+cd $swarmdir
 #
 jobid1=$(swarm -f SRAtoolkit-prefetch.swarm -g 4 -t 4 --time 24:00:00 --gres=lscratch:75 --module sratoolkit --logdir ~/job_outputs/SRA_Toolkit/Prefetch/"$SWARM_NAME" --sbatch "--mail-type=ALL,TIME_LIMIT_80 --job-name "$SWARM_NAME"_Prefetch")
 echo "SRAtoolkit Prefetch Swarm ID: " $jobid1
 #
-jobid2=$(swarm -f SRAtoolkit-fastqdump.swarm -g 4 -t 4 --time 36:00:00 --gres=lscratch:75 --module sratoolkit --logdir ~/job_outputs/SRA_Toolkit/fastq-dump/"$SWARM_NAME" --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid1" --job-name "$SWARM_Name"_Fqdump")
+jobid2=$(swarm -f SRAtoolkit-fastqdump.swarm -g 4 -t 4 --time 36:00:00 --gres=lscratch:75 --module sratoolkit --logdir ~/job_outputs/SRA_Toolkit/fastq-dump/"$SWARM_NAME" --sbatch "--mail-type=ALL,TIME_LIMIT_80 --dependency=afterok:"$jobid1" --job-name "$SWARM_NAME"_Fqdump")
 echo "Sratoolkit Fastq-dump Swarm ID: " $jobid2
 #
 ## End SRAtoolkit pipeline

@@ -25,9 +25,9 @@ cmd(){ echo `basename $0`; }
 #
 # Help command output
 usage(){
-        echo "\
-                `cmd` [OPTION...]
-        -d, --directory; Parent directory of pipeline processed files.
+        printf "Note: This script can be run on Helix and is preferable to do so.\n
+	`cmd` [OPTION...]\n
+        -d, --directory; Parent directory of pipeline processed files.\n
         -h, --help; Print this message and exit.
         " | column -t -s ";"
 }
@@ -80,7 +80,7 @@ else
 	shift
 fi
 #
-cd scripts/
+cd subscripts/
 scriptdir=$(pwd)
 export scriptdir
 combinepy=""$scriptdir"/postprocess-combinestats.py"
