@@ -104,6 +104,10 @@ export tmpdir
 #
 cd $homedir
 #
+cd swarmfiles
+swarmdir=$(pwd)
+export swarmdir
+#
 ## Blank swarmfiles required to complete script
 > postprocess-BQSR2CRAM.swarm
 > postprocess-gVCFRecompress.swarm
@@ -112,7 +116,9 @@ cd $homedir
 > postprocess-alignmentmetrics.swarm
 > postprocess-flagstat.swarm
 #
-cd scripts/
+cd $homedir
+#
+cd subscripts/
 scriptdir=$(pwd)
 #
 cd "$tmpdir"

@@ -25,9 +25,9 @@ cmd(){ echo `basename $0`; }
 #
 # Help command output
 usage(){
-        echo "\
-                `cmd` [OPTION...]
-        -d, --directory; Parent directory of pipeline processed files.
+        printf "Note: This script can be run on Helix and is preferable to do so.\n
+	`cmd` [OPTION...]\n
+        -d, --directory; Parent directory of pipeline processed files.\n
         -h, --help; Print this message and exit.
         " | column -t -s ";"
 }
@@ -70,19 +70,20 @@ if [ -n "$*" ]; then
         echo "Try '`cmd` -h' for more information."
         exit 1
 fi
-#
-## Check to verify that the directory flag was passed on the command line
+## Section to make sure the directory flag was passed on the command line
 if [[ -z $PARENT_DIR ]]
 then
 	echo "Missing directory flag!"
 	echo "Try '`cmd` -h or `cmd` --help' for more information."
-	exit 1
+        exit 1
 else
 	shift
 fi
 #
-cd scripts/
+cd subscripts/
 scriptdir=$(pwd)
+export scriptdir
+combinepy=""$scriptdir"/postprocess-combinestats.py"
 #
 cd "$tmpdir"
 > DatasetDirectories.tmp
@@ -99,68 +100,18 @@ cd "$PARENT_DIR" # Change into the parent directory
 #
 ## Unlike the previous scripts that use functions, this script will not require the use of functions as the subscript has checks and all of the files required are already created.
 #
-confirm(){
-	echo "WARNING! You are about to delete many files!"
-	echo "This entails deleting:"
-	echo "All BAM files"
-	echo "Non-concatenated BQSR tables"
-	echo "Non-final gVCF files"
-	echo "Non-final statistics files"
-	echo ""
-	while true; do
-	read -p "Are you absolutely sure you want to do this? [Y/N] " j
-	case $j in
-                [y/Y])
-			cleanup; break;;
-                [n/N])
-                        echo -e "Exiting without deleting any files";
-                        exit 1;;
-                *)
-                        echo "Invalid Option, enter (Y)es or (N)o"
-                        confirm
-                        ;;
-        esac
+for dir in ${basedir[@]}
+do
+	cd "$dir"
+	IFS=,$'\n' read -d '' -r -a samplename < "$dir"/txt_files/rename.txt; echo "Collecting stats for "${samplename[0]}""
+	export file_dir=$(pwd)
+	cd txt_files/
+	export txt_dir=$(pwd)
+	cd $file_dir
+	cd BQSR/	
+	export bqsr_dir=$(pwd)
+	cd $file_dir
+	cd gVCF
+	export gvcf_dir=$(pwd)
+	python "$combinepy"	
 done
-}
-#
-finalconfirm(){
-	echo "ATTENTION!!"
-	echo "Final stats file not found! This may mean some files are missing!"
-	while true; do
-	read -r -p "Are you absolutely sure you want to force cleanup? [Y/N] " l
-	case $l in
-		[y/Y])
-			forcecleanup; break;;
-		[n/N])
-			echo -e "Exiting this folder without deleting files. Check for missing files."
-			exit 1;;
-		*)
-			echo "Invalid option, enter (Y)es or (N)o"
-			finalconfirm
-			;;
-	esac
-done
-}	
-#
-forcecleanup(){
-#echo "Successful forcecleanup!"
-		printf "Performing cleanup for "$dir"..."; rm -r "$dir"/bwa_bam; rm -r "$dir"/dedup_bam; mv "$dir"/BQSR/tables/*.reports.list "$dir"/txt_files; rm -r "$dir"/BQSR; rm -r "$dir"/gVCF; rm "$dir"/txt_files/*.tmp; rm "$dir"/txt_files/bqsrreports.list; rm "$dir"/txt_files/*.knownsites.vcf.gz*; mv "$dir"/*.runs.table "$dir"/txt_files/ && printf "done"
-}
-#
-cleanup(){
-	for dir in ${basedir[@]}
-	do
-		cd "$dir";
-		( for file in "$dir"/txt_files/*.stats.txt
-		do
-			if [ -e "$file" ]
-			then
-				printf "Performing cleanup for "$dir"..."; rm -r "$dir"/bwa_bam && rm -r "$dir"/dedup_bam && mv "$dir"/BQSR/tables/*.reports.list "$dir"/txt_files && rm -r "$dir"/BQSR && rm -r "$dir"/gVCF && rm "$dir"/txt_files/*.tmp && rm "$dir"/txt_files/bqsrreports.list && rm "$dir"/txt_files/*.knownsites.vcf.gz* && mv "$dir"/*.runs.table "$dir"/txt_files/ && printf "done\n"
-			else
-				finalconfirm
-			fi
-		done )
-	done
-}
-#
-confirm
