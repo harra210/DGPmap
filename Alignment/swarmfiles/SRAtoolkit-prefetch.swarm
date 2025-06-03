@@ -1,0 +1,5 @@
+prefetch -c -X 75g -O /data/harrisac2/WGS_Alignment/Processing/Dog10K/Batch54/SAMN15625705 SRR12330358
+prefetch -c -X 75g -O /data/harrisac2/WGS_Alignment/Processing/Dog10K/Batch54/SAMN15625708 SRR12330325
+prefetch -c -X 75g -O /data/harrisac2/WGS_Alignment/Processing/Dog10K/Batch54/SAMN15625776 SRR12330034
+prefetch -c -X 75g -O /data/harrisac2/WGS_Alignment/Processing/Dog10K/Batch54/SAMN15625903 SRR12330277
+prefetch -c -X 75g -O /data/harrisac2/WGS_Alignment/Processing/Dog10K/Batch54/SAMN15625939 SRR12330238

@@ -81,7 +81,7 @@ else
 	shift
 fi
 #
-cd scripts/
+cd subscripts/
 scriptdir=$(pwd)
 #
 cd "$tmpdir"
