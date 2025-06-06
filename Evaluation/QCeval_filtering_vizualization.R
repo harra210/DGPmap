@@ -782,12 +782,6 @@ plot(gt.mat[,2]/rowSums(gt.mat[,c(1,3)]), col = cols)
 
 # plots for individual samples compared to whole distribution, will be edited in, tested, and fixed later.
 
-
-#indiv.samples <- c("NLUN000004",
-#                   "ShetlandSheepdog34_41357",
-#                   "GHUT000006",
-#                   "BerneseMountainDog25_33589")
-
 samples.defined = function(samples)!is.null(samples)
 #
 if(samples.defined){
