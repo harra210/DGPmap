@@ -282,6 +282,8 @@ XNonPAR_gDB(){
 bcfAutoXPAR_intervals(){
 	cd "$bcfintervalmap"
         #
+	rm -R *_AutoXPARsamples.txt
+	#
 	for f in {1..38};
         do
                 while read i
@@ -299,23 +301,15 @@ bcfAutoXPAR_intervals(){
 ## Issue to figure out for this function is why when rerunning the echo repeats until complete rather than just one echo'ed line.
 #
 bcfAutoXPAR_rerun(){
-        cd "$bcfintervalmap"
-	#
-	for file in "$bcfintervalmap"/*_AutoXPARsamples.txt
-        do
-                if [ -s "$file" ]
-                then
-                        echo "Blanking old AutoXPAR interval files..." && rm -R *_AutoXPARsamples.txt && printf "done" && bcfAutoXPAR_intervals
-                else
-                        bcfAutoXPAR_intervals
-                fi
-        done
+	bcfAutoXPAR_intervals
 }
 #
 ## Now we do the same for chromosome X NONPAR regions
 #
 bcfXNonPAR_intervals(){
         cd "$bcfintervalmap"
+	#
+	rm -R XNonPARsamples.txt
 	#
 	while read i
         do
@@ -332,17 +326,7 @@ bcfXNonPAR_intervals(){
 }
 #
 bcfXNonPAR_rerun(){
-        cd "$bcfintervalmap"
-        #
-	for file in "$bcfintervalmap"/XNonPARsamples.txt
-        do
-                if [ -e "$file" ]
-                then
-                        echo "Blanking old XNonPAR interval file..." && rm -R XNonPARsamples.txt && printf "done" && bcfXNonPAR_intervals
-                else
-                        bcfXNonPAR_intervals
-                fi
-        done
+	bcfXNonPAR_intervals
 }
 #
 ## Now, confirmatory checks need to be done to concat everything to chromosome level as this check is performed at the GenomicsDBImport steps. The AutoXPAR will have 2 commands written to the swarm file, chr 1-38 and then chrX.
@@ -671,7 +655,9 @@ XNonPARGdbI_rerun(){
 }
 #
 bcfconcatFULL_rerun(){
+	bcfAutoXPAR_intervals
 	bcfconcat_AutoXPAR
+	bcfXNonPAR_intervals
 	bcfconcat_XNonPAR
 	GATK_gathervcfs
 	GATK_SelectVariants
@@ -680,6 +666,7 @@ bcfconcatFULL_rerun(){
 }
 #
 bcfconcatAutoXPAR_rerun(){
+	bcfAutoXPAR_intervals
 	bcfconcat_AutoXPAR
 	GATK_gathervcfs
 	GATK_SelectVariants
@@ -688,6 +675,7 @@ bcfconcatAutoXPAR_rerun(){
 }
 #
 bcfconcatXNonPAR_rerun(){
+	bcfXNonPAR_intervals
 	bcfconcat_XNonPAR
 	GATK_gathervcfs
 	GATK_SelectVariants
@@ -728,6 +716,9 @@ then
 elif [ $wcRAW == 2255 ] && [ $wcXNON -ge 0 ] && ! [ $wcXNON == 119 ] #If AutoXPAR shards are complete but missing XNonPAR shards detected, will rerun XNonPAR.
 then
 	XNonPARGdbI_rerun
+elif [ $wcRAW == 2255 ] && [ $wcXNON == 119 ] && ! [ $bcAuto == 39 ] && ! [ $bcXNPAR == 1 ]
+then
+	bcfconcatFULL_rerun
 elif [ $wcRAW == 2255 ] && [ $wcXNON == 119 ] && ! [ $bcAuto == 39 ] #GdbI completed successfully but missing 39 concatenated vcf files then BCFtools concat will rerun
 then
 	bcfconcatAutoXPAR_rerun
