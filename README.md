@@ -1,6 +1,8 @@
 # NHGRI Dog Genome Project WGS mapping Pipeline
 
-This repository contains the pipeline toolkit which WGS samples are processed at NHGRI's Dog Genome Project. This pipeline is heavily inspired by the pipeline created by [Jeff Kidd for Dog10K](https://github.com/jmkidd/dogmap). It consists of three main sections: Alignment, Jointcalling, and cohort evaluation. This repository is designed to be a stand alone package that can be modified to a user's particular situation. This pipeline is designed to be executed in a unix environment using our [cluster environment](https://hpc.nih.gov/) using a global shared disk file system. This pipeline is designed in shell and is designed to work via subshells in order to iterate through subdirectories to excute commands and write a properly formatted swarm file which can then be submitted to the cluster at the very end after user confirmation that the swarmfile syntax looks correct.
+This repository contains the pipeline toolkit which WGS samples are processed at NHGRI's Dog Genome Project. This pipeline is heavily inspired by the pipeline created by [Jeff Kidd for Dog10K](https://github.com/jmkidd/dogmap). It consists of three main sections: Alignment, Jointcalling, and cohort evaluation. 
+
+This repository is designed to be a stand alone package that can be modified to a user's particular situation. This pipeline is designed to be executed in a unix environment using our [cluster environment](https://hpc.nih.gov/) using a global shared disk file system. This pipeline is designed in shell and is designed to work via subshells in order to iterate through subdirectories to excute commands and write a properly formatted swarm file which can then be submitted to the cluster at the very end after user confirmation that the swarmfile syntax looks correct.
 
 ## Required files to download
 
